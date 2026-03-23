@@ -1,18 +1,21 @@
 :root {
-  --bg: #fbfcfa;
+  --bg: #eef6f5;
   --surface: #ffffff;
-  --surface-soft: #f7faf7;
-  --text: #34473a;
-  --text-strong: #1a291f;
-  --green-050: #f2f7f2;
-  --green-100: #e5eee6;
-  --green-200: #d4e2d5;
-  --green-700: #446a4d;
-  --green-800: #2f5137;
-  --green-accent: #6f8f4b;
-  --border: rgba(78, 111, 87, 0.1);
-  --shadow-soft: 0 14px 32px rgba(33, 51, 40, 0.05);
-  --shadow-card: 0 10px 24px rgba(33, 51, 40, 0.04);
+  --surface-soft: #f7fbfa;
+  --surface-muted: #f4f7f6;
+  --text: #50615a;
+  --text-strong: #24312c;
+  --green-050: #edf9f4;
+  --green-100: #d9efe4;
+  --green-200: #bee4d3;
+  --green-300: #9fd8c0;
+  --green-600: #46c48a;
+  --green-700: #31bc7e;
+  --green-800: #249964;
+  --green-accent: #31bc7e;
+  --border: rgba(75, 111, 98, 0.08);
+  --shadow-soft: 0 22px 48px rgba(60, 92, 80, 0.09);
+  --shadow-card: 0 14px 30px rgba(60, 92, 80, 0.07);
   font-family:
     Inter,
     "Segoe UI",
@@ -39,7 +42,9 @@ body {
   margin: 0;
   min-width: 20rem;
   min-height: 100vh;
-  background: transparent;
+  background:
+    radial-gradient(circle at top center, rgba(255, 255, 255, 0.9), transparent 40%),
+    linear-gradient(180deg, #f4fbfa 0%, var(--bg) 100%);
 }
 
 a,
