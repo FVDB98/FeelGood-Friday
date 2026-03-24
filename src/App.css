@@ -1,16 +1,45 @@
 .page-shell {
   width: min(100%, 70rem);
   margin: 0 auto;
-  padding: 1rem 1rem 2.75rem;
+  padding: 5.75rem 1rem 2.75rem;
 }
 
 .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 25;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 2.5rem;
-  padding: 0.25rem 0;
+  margin-bottom: 0;
+  padding: 1rem max(1rem, calc((100vw - 70rem) / 2 + 1rem));
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(18px);
+  transform: translateY(0);
+  transition:
+    transform 260ms ease,
+    opacity 260ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.topbar-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.topbar-hidden {
+  opacity: 0;
+  transform: translateY(-1.35rem);
+  pointer-events: none;
+}
+
+.topbar-scrolled {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 8px 22px rgba(60, 92, 80, 0.08);
 }
 
 .brand,
@@ -416,7 +445,7 @@
   width: min(100%, 70rem);
   max-width: 70rem;
   min-height: 100vh;
-  padding: 1rem 1rem 2.75rem;
+  padding: 5.75rem 1rem 2.75rem;
   display: block;
   background: transparent;
 }
@@ -811,11 +840,7 @@
 
 @media (min-width: 48rem) {
   .page-shell {
-    padding: 1.5rem 1.5rem 3rem;
-  }
-
-  .topbar {
-    margin-bottom: 3rem;
+    padding: 6rem 1.5rem 3rem;
   }
 
   .nav-primary {
@@ -833,7 +858,7 @@
   }
 
   .auth-page-shell {
-    padding: 1.5rem 1.5rem 3rem;
+    padding: 6rem 1.5rem 3rem;
   }
 
   .hero-section {
@@ -951,11 +976,11 @@
 
 @media (min-width: 70rem) {
   .page-shell {
-    padding: 2rem 2rem 3.5rem;
+    padding: 6.25rem 2rem 3.5rem;
   }
 
   .auth-page-shell {
-    padding: 2rem 2rem 3.5rem;
+    padding: 6.25rem 2rem 3.5rem;
   }
 
   .hero-section {

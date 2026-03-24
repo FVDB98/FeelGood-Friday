@@ -168,6 +168,8 @@ function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
 function SiteNav() {
   const { isSignedIn } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isNavVisible, setIsNavVisible] = useState(true)
+  const [hasScrolled, setHasScrolled] = useState(false)
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -190,13 +192,50 @@ function SiteNav() {
     }
   }, [isMenuOpen])
 
+  useEffect(() => {
+    let lastScrollY = window.scrollY
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      const isNearTop = currentScrollY < 24
+
+      setHasScrolled(currentScrollY > 12)
+
+      if (isMenuOpen) {
+        setIsNavVisible(true)
+        lastScrollY = currentScrollY
+        return
+      }
+
+      if (isNearTop) {
+        setIsNavVisible(true)
+      } else if (currentScrollY > lastScrollY + 8) {
+        setIsNavVisible(false)
+      } else if (currentScrollY < lastScrollY - 8) {
+        setIsNavVisible(true)
+      }
+
+      lastScrollY = currentScrollY
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [isMenuOpen])
+
   const closeMenu = () => {
     setIsMenuOpen(false)
   }
 
   return (
     <>
-      <header className="topbar">
+      <header
+        className={`topbar ${isNavVisible ? 'topbar-visible' : 'topbar-hidden'} ${
+          hasScrolled ? 'topbar-scrolled' : ''
+        }`}
+      >
         <a className="brand" href="/" aria-label="FeelGood Friday home">
           FeelGood Friday
         </a>
