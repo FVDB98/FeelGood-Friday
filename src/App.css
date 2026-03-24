@@ -15,6 +15,7 @@
 
 .brand,
 .sign-in-link,
+.nav-link,
 .primary-button {
   text-decoration: none;
 }
@@ -28,6 +29,23 @@
 .sign-in-link {
   color: var(--green-700);
   font-weight: 600;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.nav-link {
+  color: var(--green-700);
+  font-weight: 600;
+}
+
+.user-button-shell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero-section {
@@ -247,6 +265,252 @@
   background: var(--green-700);
 }
 
+.auth-page-shell {
+  width: min(100%, 70rem);
+  max-width: 70rem;
+  min-height: 100vh;
+  padding: 1rem 1rem 2.75rem;
+  display: block;
+  background: transparent;
+}
+
+.auth-layout {
+  display: grid;
+  gap: 1rem;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.auth-layout-minimal {
+  max-width: 34rem;
+  width: 100%;
+}
+
+.auth-topbar {
+  margin-bottom: 2rem;
+}
+
+.auth-card,
+.auth-preview-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  box-shadow: var(--shadow-card);
+}
+
+.auth-card {
+  padding: 1.4rem;
+  overflow: visible;
+  max-width: 38rem;
+  margin: 0 auto;
+}
+
+.auth-card-minimal {
+  width: 100%;
+  padding: 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.9rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.auth-page-title-banner {
+  padding: 0.9rem 1rem 0.4rem;
+}
+
+.auth-page-title {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: clamp(1.85rem, 4vw, 2.35rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.auth-clerk-shell {
+  padding: 0.65rem;
+  overflow: visible;
+}
+
+.auth-clerk-root {
+  width: 100%;
+  overflow: visible;
+}
+
+.auth-clerk-card-box {
+  width: 100%;
+  overflow: visible;
+  padding: 0.9rem;
+}
+
+.auth-clerk-card {
+  width: 100%;
+  box-shadow: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.auth-clerk-header {
+  display: none;
+}
+
+.auth-clerk-header-subtitle,
+.auth-clerk-footer-text,
+.auth-clerk-alert-text,
+.auth-clerk-identity-text,
+.auth-clerk-divider-text {
+  color: var(--text);
+  font-size: 0.94rem;
+}
+
+.auth-clerk-divider-line {
+  background: var(--green-100);
+}
+
+.auth-clerk-hidden {
+  display: none;
+}
+
+.auth-clerk-field-label {
+  color: var(--text-strong);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.auth-clerk-field-input {
+  min-height: 3.2rem;
+  padding: 0.9rem 1rem;
+  color: var(--text-strong);
+  background: var(--surface-muted);
+  border: 1px solid var(--green-100);
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+.auth-clerk-field-input:focus {
+  border-color: var(--green-300);
+  box-shadow: 0 0 0 4px rgba(49, 188, 126, 0.12);
+}
+
+.auth-clerk-primary-button {
+  min-height: 3.25rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #47ca8d 0%, #31bc7e 100%);
+  box-shadow: 0 10px 24px rgba(49, 188, 126, 0.22);
+}
+
+.auth-clerk-primary-button:hover {
+  background: var(--green-800);
+}
+
+.auth-clerk-social-button {
+  min-height: 3rem;
+  border-radius: 1rem;
+  border: 1px solid var(--green-100);
+  box-shadow: none;
+}
+
+.auth-clerk-social-button-text,
+.auth-clerk-footer-link,
+.auth-clerk-inline-link {
+  color: var(--green-800);
+  font-weight: 600;
+}
+
+.welcome-shell {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.welcome-card {
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.9rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.welcome-title {
+  max-width: 18rem;
+  margin-bottom: 0.9rem;
+}
+
+.welcome-description {
+  max-width: 34rem;
+  margin-bottom: 1.4rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.welcome-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.welcome-panel {
+  padding: 1.1rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--green-100);
+  border-radius: 1.4rem;
+}
+
+.welcome-panel-accent {
+  background: linear-gradient(180deg, var(--green-050), #f8fcf9);
+}
+
+.welcome-panel-title {
+  display: inline-flex;
+  margin-bottom: 0.7rem;
+  color: var(--green-800);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.welcome-panel p {
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.welcome-actions {
+  margin-top: 1.4rem;
+}
+
+.welcome-button {
+  width: 100%;
+}
+
+.auth-empty-state {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1.1rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--green-100);
+  border-radius: 1.2rem;
+}
+
+.auth-empty-title {
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
+.auth-empty-copy {
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.auth-empty-code {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.65rem 0.8rem;
+  color: var(--green-800);
+  background: var(--green-050);
+  border: 1px solid var(--green-100);
+  border-radius: 0.9rem;
+  font-size: 0.86rem;
+}
+
 .stats-section {
   margin-top: 2rem;
 }
@@ -329,6 +593,10 @@
     margin-bottom: 3rem;
   }
 
+  .auth-page-shell {
+    padding: 1.5rem 1.5rem 3rem;
+  }
+
   .hero-section {
     grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 26rem);
     gap: 1.75rem;
@@ -336,6 +604,30 @@
 
   .hero-copy {
     padding: 2.75rem;
+  }
+
+  .auth-layout {
+    gap: 1.25rem;
+  }
+
+  .auth-card {
+    padding: 1.75rem;
+  }
+
+  .auth-clerk-shell {
+    padding: 1rem;
+  }
+
+  .welcome-card {
+    padding: 2rem;
+  }
+
+  .welcome-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .welcome-button {
+    width: auto;
   }
 
   .panel-grid {
@@ -386,13 +678,36 @@
     max-width: none;
   }
 
+  .auth-card {
+    max-width: none;
+    margin: 0 auto;
+  }
+
   .highlight-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 70rem) {
+  .auth-page-shell {
+    padding: 2rem;
+  }
+
+  .auth-card-minimal {
+    padding: 1.6rem;
+  }
+
+  .auth-clerk-card-box {
+    padding: 1.25rem;
+  }
+}
+
+@media (min-width: 70rem) {
   .page-shell {
+    padding: 2rem 2rem 3.5rem;
+  }
+
+  .auth-page-shell {
     padding: 2rem 2rem 3.5rem;
   }
 

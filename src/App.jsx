@@ -1,3 +1,10 @@
+import {
+  SignIn,
+  SignUp,
+  UserButton,
+  useAuth,
+  useUser,
+} from '@clerk/react'
 import './App.css'
 
 const highlights = [
@@ -55,6 +62,44 @@ const quickStats = [
   { value: 'Unlimited', suffix: 'positives' },
 ]
 
+const hasClerkKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
+
+const clerkAppearance = {
+  variables: {
+    colorPrimary: '#31bc7e',
+    colorText: '#50615a',
+    colorTextOnPrimaryBackground: '#ffffff',
+    colorBackground: '#ffffff',
+    colorInputBackground: '#f4f7f6',
+    colorInputText: '#24312c',
+    colorNeutral: '#d9efe4',
+    borderRadius: '1rem',
+    fontFamily: 'Inter, sans-serif',
+  },
+  elements: {
+    rootBox: 'auth-clerk-root',
+    cardBox: 'auth-clerk-card-box',
+    card: 'auth-clerk-card',
+    header: 'auth-clerk-header',
+    headerTitle: 'auth-clerk-hidden',
+    headerSubtitle: 'auth-clerk-hidden',
+    socialButtonsBlockButton: 'auth-clerk-social-button',
+    socialButtonsBlockButtonText: 'auth-clerk-social-button-text',
+    dividerLine: 'auth-clerk-divider-line',
+    dividerText: 'auth-clerk-divider-text',
+    formFieldLabel: 'auth-clerk-field-label',
+    formFieldInput: 'auth-clerk-field-input',
+    formButtonPrimary: 'auth-clerk-primary-button',
+    footerActionLink: 'auth-clerk-footer-link',
+    footerActionText: 'auth-clerk-footer-text',
+    identityPreviewText: 'auth-clerk-identity-text',
+    formResendCodeLink: 'auth-clerk-inline-link',
+    formFieldAction: 'auth-clerk-inline-link',
+    otpCodeFieldInput: 'auth-clerk-field-input',
+    alertText: 'auth-clerk-alert-text',
+  },
+}
+
 function JournalNotes({ items }) {
   return (
     <ul className="journal-list">
@@ -65,17 +110,95 @@ function JournalNotes({ items }) {
   )
 }
 
-function App() {
+function SiteNav() {
+  const { isSignedIn } = useAuth()
+
+  return (
+    <header className="topbar">
+      <a className="brand" href="/" aria-label="FeelGood Friday home">
+        FeelGood Friday
+      </a>
+
+      <div className="nav-actions">
+        {isSignedIn ? (
+          <>
+            <a className="nav-link" href="/">
+              My week
+            </a>
+            <div className="user-button-shell">
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </>
+        ) : (
+          <a className="sign-in-link" href="/signin">
+            Sign in
+          </a>
+        )}
+      </div>
+    </header>
+  )
+}
+
+function AuthWidget({ mode }) {
+  if (!hasClerkKey) {
+    return (
+      <div className="auth-empty-state">
+        <p className="auth-empty-title">Clerk is ready to connect</p>
+        <p className="auth-empty-copy">
+          Add your Clerk publishable key in <code>.env.local</code> to render
+          the live auth experience here.
+        </p>
+        <code className="auth-empty-code">
+          VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
+        </code>
+      </div>
+    )
+  }
+
+  if (mode === 'signup') {
+    return (
+      <SignUp
+        appearance={clerkAppearance}
+        signInUrl="/signin"
+        forceRedirectUrl="/welcome"
+      />
+    )
+  }
+
+  return (
+    <SignIn
+      appearance={clerkAppearance}
+      signUpUrl="/signup"
+      forceRedirectUrl="/welcome"
+    />
+  )
+}
+
+function AuthPage({ mode }) {
+  const authTitle = mode === 'signup' ? 'Create an account' : 'Log in'
+
+  return (
+    <main className="page-shell auth-page-shell">
+      <SiteNav />
+
+      <section className="auth-layout auth-layout-minimal">
+        <article className="auth-card auth-card-minimal">
+          <div className="auth-page-title-banner">
+            <h1 className="auth-page-title">{authTitle}</h1>
+          </div>
+          <div className="auth-clerk-shell">
+            <AuthWidget mode={mode} />
+          </div>
+        </article>
+      </section>
+    </main>
+  )
+}
+
+function LandingPage() {
   return (
     <main className="page-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="FeelGood Friday home">
-          FeelGood Friday
-        </a>
-        <a className="sign-in-link" href="/signin">
-          Sign in
-        </a>
-      </header>
+      <SiteNav />
 
       <section className="hero-section">
         <div className="hero-copy">
@@ -197,6 +320,83 @@ function App() {
       </section>
     </main>
   )
+}
+
+function WelcomePage() {
+  const { isSignedIn } = useAuth()
+  const { user } = useUser()
+  const firstName = user?.firstName || user?.username || 'there'
+  
+  return (
+    <main className="page-shell">
+      <SiteNav />
+
+      <section className="welcome-shell">
+        <article className="welcome-card">
+          <p className="section-kicker">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+            >
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16M7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5M4.285 9.567a.5.5 0 0 1 .683.183A3.5 3.5 0 0 0 8 11.5a3.5 3.5 0 0 0 3.032-1.75.5.5 0 1 1 .866.5A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1-3.898-2.25.5.5 0 0 1 .183-.683M10 8c-.552 0-1-.672-1-1.5S9.448 5 10 5s1 .672 1 1.5S10.552 8 10 8" />
+            </svg>
+            Welcome
+          </p>
+          <h1 className="welcome-title">Welcome, {firstName}!</h1>
+          <p className="welcome-description">
+            Your FeelGood Friday space is ready. Start with one small note of
+            gratitude or one win from today, and let the week build from there.
+          </p>
+
+          <div className="welcome-grid">
+            <div className="welcome-panel">
+              <span className="welcome-panel-title">What happens next</span>
+              <ul className="journal-list">
+                <li>Add a quick gratitude note each weekday</li>
+                <li>Log the wins you want to remember</li>
+                <li>Come back on Friday for your recap</li>
+              </ul>
+            </div>
+            <div className="welcome-panel welcome-panel-accent">
+              <span className="welcome-panel-title">Your first step</span>
+              <p>
+                Keep it simple. One sentence is enough to start building the
+                habit.
+              </p>
+            </div>
+          </div>
+
+          <div className="welcome-actions">
+            <a className="primary-button welcome-button" href={isSignedIn ? '/' : '/signin'}>
+              Get started
+            </a>
+          </div>
+        </article>
+      </section>
+    </main>
+  )
+}
+
+function App() {
+  const path = window.location.pathname
+
+  if (path === '/signup') {
+    return <AuthPage mode="signup" />
+  }
+
+  if (path === '/signin') {
+    return <AuthPage mode="signin" />
+  }
+
+  if (path === '/welcome') {
+    return <WelcomePage />
+  }
+
+  return <LandingPage />
 }
 
 export default App
