@@ -5,6 +5,7 @@ import {
   useAuth,
   useUser,
 } from '@clerk/react'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 const highlights = [
@@ -62,6 +63,34 @@ const quickStats = [
   { value: 'Unlimited', suffix: 'positives' },
 ]
 
+const navItems = [
+  { href: '/about', label: 'About' },
+  { href: '/faq', label: 'FAQ' },
+]
+
+const faqItems = [
+  {
+    question: 'How often should I use FeelGood Friday?',
+    answer:
+      'A quick check-in each weekday is enough. The habit works best when it feels lightweight and easy to keep up with.',
+  },
+  {
+    question: 'What should I write down?',
+    answer:
+      'Anything that felt grounding, encouraging, or quietly good. A kind message, a finished task, a walk outside, or simply getting through the day all count.',
+  },
+  {
+    question: 'Do my wins need to be big?',
+    answer:
+      'No. The point is to notice progress without turning it into pressure. Tiny wins are often the ones that keep momentum going.',
+  },
+  {
+    question: 'What happens on Friday?',
+    answer:
+      'Your week comes together into a simple recap so you can head into the weekend with a clearer sense of what went well.',
+  },
+]
+
 const hasClerkKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
 
 const clerkAppearance = {
@@ -110,32 +139,151 @@ function JournalNotes({ items }) {
   )
 }
 
+function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
+  return (
+    <>
+      {isSignedIn && (
+        <a
+          className={isMobile ? 'nav-drawer-link nav-drawer-link-strong' : 'nav-link'}
+          href="/"
+          onClick={onNavigate}
+        >
+          My week
+        </a>
+      )}
+      {navItems.map((item) => (
+        <a
+          key={item.href}
+          className={isMobile ? 'nav-drawer-link' : 'nav-link'}
+          href={item.href}
+          onClick={onNavigate}
+        >
+          {item.label}
+        </a>
+      ))}
+    </>
+  )
+}
+
 function SiteNav() {
   const { isSignedIn } = useAuth()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return undefined
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false)
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isMenuOpen])
+
+  const closeMenu = () => {
+    setIsMenuOpen(false)
+  }
 
   return (
-    <header className="topbar">
-      <a className="brand" href="/" aria-label="FeelGood Friday home">
-        FeelGood Friday
-      </a>
+    <>
+      <header className="topbar">
+        <a className="brand" href="/" aria-label="FeelGood Friday home">
+          FeelGood Friday
+        </a>
 
-      <div className="nav-actions">
-        {isSignedIn ? (
-          <>
-            <a className="nav-link" href="/">
-              My week
+        <nav className="nav-primary" aria-label="Primary navigation">
+          <NavMenuContent isSignedIn={isSignedIn} />
+        </nav>
+
+        <div className="nav-actions">
+          {isSignedIn ? (
+            <div className="user-button-shell nav-user-desktop">
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          ) : (
+            <a className="sign-in-link" href="/signin">
+              Login
             </a>
+          )}
+
+          <button
+            type="button"
+            className="nav-menu-button"
+            aria-label="Open navigation menu"
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation"
+            onClick={() => setIsMenuOpen(true)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
+      </header>
+
+      <div
+        className={`nav-drawer-backdrop${isMenuOpen ? ' nav-drawer-backdrop-open' : ''}`}
+        onClick={closeMenu}
+        aria-hidden={isMenuOpen ? 'false' : 'true'}
+      />
+
+      <aside
+        id="mobile-navigation"
+        className={`nav-drawer${isMenuOpen ? ' nav-drawer-open' : ''}`}
+        aria-hidden={isMenuOpen ? 'false' : 'true'}
+      >
+        <div className="nav-drawer-header">
+          <p className="nav-drawer-kicker">Menu</p>
+          <button
+            type="button"
+            className="nav-drawer-close"
+            aria-label="Close navigation menu"
+            onClick={closeMenu}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+            >
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+            </svg>
+          </button>
+        </div>
+
+        <nav className="nav-drawer-links" aria-label="Mobile navigation">
+          <NavMenuContent
+            isSignedIn={isSignedIn}
+            isMobile
+            onNavigate={closeMenu}
+          />
+        </nav>
+
+        <div className="nav-drawer-footer">
+          {isSignedIn ? (
             <div className="user-button-shell">
               <UserButton afterSignOutUrl="/" />
             </div>
-          </>
-        ) : (
-          <a className="sign-in-link" href="/signin">
-            Sign in
-          </a>
-        )}
-      </div>
-    </header>
+          ) : (
+            <a className="nav-drawer-signin" href="/signin" onClick={closeMenu}>
+              Login
+            </a>
+          )}
+        </div>
+      </aside>
+    </>
   )
 }
 
@@ -397,6 +545,109 @@ function WelcomePage() {
   )
 }
 
+function InfoPage({ kicker, title, description, children }) {
+  return (
+    <main className="page-shell">
+      <SiteNav />
+
+      <section className="info-page-shell">
+        <article className="info-page-card">
+          <p className="section-kicker">{kicker}</p>
+          <h1 className="info-page-title">{title}</h1>
+          <p className="info-page-description">{description}</p>
+          <div className="info-page-content">
+            {children}
+          </div>
+        </article>
+      </section>
+    </main>
+  )
+}
+
+function AboutPage() {
+  return (
+    <InfoPage
+      kicker={(
+        <>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+          >
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+          </svg>
+          About
+        </>
+      )}
+      title="A gentler way to notice what went well"
+      description="FeelGood Friday is built to help you catch the moments that are easy to forget by the end of a busy week."
+    >
+      <div className="info-page-grid">
+        <article className="info-page-panel">
+          <h2>Why it exists</h2>
+          <p>
+            Most weeks move fast. Small wins, calming routines, and good moments
+            can disappear under everything else. FeelGood Friday gives them a
+            place to land.
+          </p>
+        </article>
+        <article className="info-page-panel">
+          <h2>How it feels</h2>
+          <p>
+            The experience is intentionally light. A few short notes during the
+            week turn into something warm, clear, and useful by Friday.
+          </p>
+        </article>
+        <article className="info-page-panel">
+          <h2>What to expect</h2>
+          <p>
+            No pressure to perform. No need to write essays. Just enough
+            structure to help you notice gratitude, momentum, and progress.
+          </p>
+        </article>
+      </div>
+    </InfoPage>
+  )
+}
+
+function FAQPage() {
+  return (
+    <InfoPage
+      kicker={(
+        <>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+          >
+            <path d="M6 6.207v9.043a.75.75 0 0 0 1.5 0V10.5a.5.5 0 0 1 1 0v4.75a.75.75 0 0 0 1.5 0v-8.5a.25.25 0 1 1 .5 0v2.5a.75.75 0 0 0 1.5 0V6.5a3 3 0 0 0-3-3H6.236a1 1 0 0 1-.447-.106l-.33-.165A.83.83 0 0 1 5 2.488V.75a.75.75 0 0 0-1.5 0v2.083c0 .715.404 1.37 1.044 1.689L5.5 5c.32.32.5.754.5 1.207" />
+            <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
+          </svg>
+          FAQ
+        </>
+      )}
+      title="Questions people usually ask first"
+      description="A few quick answers to explain how FeelGood Friday fits into your week."
+    >
+      <div className="faq-list">
+        {faqItems.map((item) => (
+          <article className="faq-item" key={item.question}>
+            <h2>{item.question}</h2>
+            <p>{item.answer}</p>
+          </article>
+        ))}
+      </div>
+    </InfoPage>
+  )
+}
+
 function App() {
   const path = window.location.pathname
 
@@ -410,6 +661,14 @@ function App() {
 
   if (path === '/welcome') {
     return <WelcomePage />
+  }
+
+  if (path === '/about') {
+    return <AboutPage />
+  }
+
+  if (path === '/faq') {
+    return <FAQPage />
   }
 
   return <LandingPage />
