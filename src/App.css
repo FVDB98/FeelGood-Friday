@@ -315,7 +315,29 @@
 }
 
 .auth-page-title-banner {
+  display: grid;
+  gap: 0.8rem;
   padding: 0.9rem 1rem 0.4rem;
+}
+
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  color: #47ca8d;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-back-link:hover {
+  color: var(--green-700);
+}
+
+.auth-back-link:focus-visible {
+  outline: 3px solid rgba(75, 153, 96, 0.28);
+  outline-offset: 3px;
 }
 
 .auth-page-title {
