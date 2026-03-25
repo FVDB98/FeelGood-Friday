@@ -63,6 +63,80 @@ const quickStats = [
   { value: 'Unlimited', suffix: 'positives' },
 ]
 
+const upliftingQuotes = [
+  "You got this!",
+  "Keep going—you're close.",
+  "Better days are coming.",
+  "One step at a time.",
+  "You’re doing amazing.",
+  "Progress, not perfection.",
+  "This is your moment.",
+  "You’re stronger than you think.",
+  "Let’s try again today.",
+  "You’re on your way.",
+  "Small wins matter.",
+  "Trust yourself more.",
+  "You can do hard things.",
+  "Bright things ahead.",
+  "Your effort counts.",
+  "Today is a fresh start.",
+  "You’re growing every day.",
+  "Keep shining.",
+  "You’re not alone.",
+  "You’re capable and ready.",
+  "Take it one breath.",
+  "Your future is bright.",
+  "Keep choosing you.",
+  "You’re making it happen.",
+  "Hope looks good on you.",
+  "You’re allowed to begin.",
+  "It’s okay—keep moving.",
+  "You’re building something beautiful.",
+  "You’re closer than yesterday.",
+  "You’re doing your best.",
+  "Good things take time.",
+  "You’re full of potential.",
+  "You can start now.",
+  "You’re brave for trying.",
+  "This will pass too.",
+  "You’re doing better than you know.",
+  "The best is unfolding.",
+  "You’re becoming unstoppable.",
+  "Let hope lead.",
+  "You’re right where you need.",
+  "Keep the faith.",
+  "You’re meant for more.",
+  "You’ve come so far.",
+  "Your light is real.",
+  "You’re built for this.",
+  "You’re allowed to bloom.",
+  "It’s going to work out.",
+  "You’re not starting over—restarting.",
+  "You’re getting stronger.",
+  "The next step is enough.",
+]
+
+const weekdayDefinitions = [
+  { key: 'mon', short: 'Mon', long: 'Monday' },
+  { key: 'tue', short: 'Tue', long: 'Tuesday' },
+  { key: 'wed', short: 'Wed', long: 'Wednesday' },
+  { key: 'thu', short: 'Thu', long: 'Thursday' },
+  { key: 'fri', short: 'Fri', long: 'Friday' },
+]
+
+const futurePlaceholders = {
+  gratitude: [
+    'Something small that brightened the day.',
+    'A moment you will want to hold onto.',
+    'A quiet thing worth feeling grateful for.',
+  ],
+  wins: [
+    'A win, even if it looks tiny on paper.',
+    'Something you will feel proud of later.',
+    'A bit of progress that deserves noticing.',
+  ],
+}
+
 const navItems = [
   { href: '/about', label: 'About' },
   { href: '/faq', label: 'FAQ' },
@@ -129,6 +203,72 @@ const clerkAppearance = {
   },
 }
 
+function formatDate(date) {
+  return new Intl.DateTimeFormat('en-GB').format(date)
+}
+
+function getWorkweek(referenceDate) {
+  const currentDay = referenceDate.getDay()
+  const distanceToMonday = currentDay === 0 ? -6 : 1 - currentDay
+  const monday = new Date(referenceDate)
+  monday.setDate(referenceDate.getDate() + distanceToMonday)
+
+  return weekdayDefinitions.map((day, index) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + index)
+
+    return {
+      ...day,
+      date,
+      dateLabel: formatDate(date),
+    }
+  })
+}
+
+function createInitialJournalEntries(referenceDate) {
+  const currentDay = referenceDate.getDay()
+  const allEntries = {
+    mon: {
+      gratitude: ['A steady start and a bit of morning calm.'],
+      wins: ['Got back into the rhythm of the week.'],
+    },
+    tue: {
+      gratitude: ['A good meal and a thoughtful check-in from a friend.'],
+      wins: ['Finished the task I had been putting off.'],
+    },
+    wed: {
+      gratitude: ['A brighter mood by the middle of the week.'],
+      wins: ['Made time for a short walk and reset.'],
+    },
+    thu: {
+      gratitude: ['A calmer evening and a clearer head.'],
+      wins: ['Wrapped up a few loose ends before Friday.'],
+    },
+    fri: {
+      gratitude: ['The feeling of making it through the week.'],
+      wins: ['Held onto momentum and kept showing up.'],
+    },
+    weekend: {
+      gratitude: ['A slower pace and space to recharge.'],
+      wins: ['Protected time for rest without guilt.'],
+    },
+  }
+
+  if (currentDay === 0 || currentDay === 6) {
+    return allEntries
+  }
+
+  return weekdayDefinitions.reduce((accumulator, day, index) => {
+    const isAvailable = index <= currentDay - 1
+
+    accumulator[day.key] = isAvailable
+      ? allEntries[day.key]
+      : { gratitude: [], wins: [] }
+
+    return accumulator
+  }, { weekend: allEntries.weekend })
+}
+
 function JournalNotes({ items }) {
   return (
     <ul className="journal-list">
@@ -139,13 +279,361 @@ function JournalNotes({ items }) {
   )
 }
 
+function PositiveQuoteBanner() {
+  const [quoteIndex, setQuoteIndex] = useState(() =>
+    Math.floor(Math.random() * upliftingQuotes.length),
+  )
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setQuoteIndex((currentIndex) => {
+        let nextIndex = currentIndex
+
+        while (nextIndex === currentIndex) {
+          nextIndex = Math.floor(Math.random() * upliftingQuotes.length)
+        }
+
+        return nextIndex
+      })
+    }, 5500)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [])
+
+  return (
+    <section className="quote-banner" aria-label="Positive quote">
+      <p className="quote-banner-kicker">A little lift for today</p>
+      <p className="quote-banner-text">{upliftingQuotes[quoteIndex]}</p>
+    </section>
+  )
+}
+
+function JournalSection({
+  title,
+  entries,
+  placeholderEntries,
+  draftValue,
+  isComposerOpen,
+  isLocked,
+  onDraftChange,
+  onToggleComposer,
+  onAddEntry,
+  onOpenManager,
+}) {
+  const entriesToRender = placeholderEntries ?? entries
+  const hasPlaceholderEntries = Boolean(placeholderEntries)
+
+  return (
+    <section className="journal-section-card">
+      <div className="journal-section-header">
+        <div>
+          <p className="journal-section-kicker">{title}</p>
+          <h2>{title === 'Gratitude' ? 'What felt good today?' : 'What went well?'}</h2>
+        </div>
+        <button
+          type="button"
+          className="journal-section-edit-button"
+          onClick={onOpenManager}
+          disabled={isLocked}
+        >
+          Edit
+        </button>
+      </div>
+
+      {entriesToRender.length > 0 ? (
+        <ul className="journal-list">
+          {entriesToRender.map((entry, index) => (
+            <li key={`${entry}-${index}`} className="journal-entry-item">
+              <div className="journal-entry-row">
+                <span
+                  className={`journal-entry-text${
+                    hasPlaceholderEntries ? ' journal-entry-text-placeholder' : ''
+                  }`}
+                >
+                  {entry}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="journal-empty-copy">Nothing here yet. Add one small note.</p>
+      )}
+
+      {isComposerOpen && (
+        <div className="journal-composer">
+          <textarea
+            className="journal-composer-input"
+            rows="3"
+            value={draftValue}
+            placeholder={`Add a ${title.toLowerCase()} note...`}
+            onChange={(event) => onDraftChange(event.target.value)}
+          />
+          <div className="journal-composer-actions">
+            <button
+              type="button"
+              className="journal-composer-icon-button"
+              aria-label="Close new entry"
+              onClick={onToggleComposer}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+              >
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="journal-composer-icon-button journal-composer-icon-button-save"
+              aria-label="Save new entry"
+              onClick={onAddEntry}
+              disabled={!draftValue.trim()}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+              >
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="journal-card-actions">
+        {!isComposerOpen && !isLocked && (
+          <button
+            type="button"
+            className="journal-add-inline"
+            aria-label={`Add ${title.toLowerCase()} entry`}
+            onClick={onToggleComposer}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+            >
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+    </section>
+  )
+}
+
+function ManageEntriesModal({
+  title,
+  entries,
+  editingIndex,
+  editingValue,
+  onCancel,
+  onStartEditing,
+  onEditingChange,
+  onCancelEditing,
+  onSaveEdit,
+  onRequestDelete,
+}) {
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onCancel()
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onCancel])
+
+  return (
+    <>
+      <div className="entry-modal-backdrop" onClick={onCancel} />
+      <div className="entry-modal-shell" role="dialog" aria-modal="true" aria-label={`Manage ${title} entries`}>
+        <div className="entry-modal-card">
+          <p className="journal-section-kicker">{title}</p>
+          <h2 className="entry-modal-title">Manage your {title.toLowerCase()} entries</h2>
+          <p className="entry-modal-copy">
+            Edit or remove entries here without losing your place on the page.
+          </p>
+          <div className="entry-modal-list">
+            {entries.map((entry, index) => (
+              <div className="entry-modal-item" key={`${entry}-${index}`}>
+                {editingIndex === index ? (
+                  <>
+                    <textarea
+                      className="journal-composer-input entry-modal-input"
+                      rows="4"
+                      value={editingValue}
+                      onChange={(event) => onEditingChange(event.target.value)}
+                    />
+                    <div className="journal-composer-actions">
+                      <button
+                        type="button"
+                        className="journal-secondary-button"
+                        onClick={onCancelEditing}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="primary-button journal-save-button"
+                        onClick={() => onSaveEdit(index)}
+                        disabled={!editingValue.trim()}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="entry-modal-row">
+                    <span className="journal-entry-text">{entry}</span>
+                    <div className="journal-entry-icon-actions">
+                      <button
+                        type="button"
+                        className="journal-entry-picker"
+                        aria-label="Edit this entry"
+                        onClick={() => onStartEditing(index)}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          viewBox="0 0 16 16"
+                          aria-hidden="true"
+                        >
+                          <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className="journal-entry-picker journal-entry-picker-danger"
+                        aria-label="Remove this entry"
+                        onClick={() => onRequestDelete(index)}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          viewBox="0 0 16 16"
+                          aria-hidden="true"
+                        >
+                          <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {editingIndex === null && (
+            <div className="journal-composer-actions">
+              <button
+                type="button"
+                className="journal-secondary-button"
+                onClick={onCancel}
+              >
+                Done
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function DeleteEntryModal({
+  title,
+  entry,
+  onCancel,
+  onConfirm,
+}) {
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onCancel()
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onCancel])
+
+  return (
+    <>
+      <div className="entry-modal-backdrop" onClick={onCancel} />
+      <div className="entry-modal-shell" role="dialog" aria-modal="true" aria-label={`Delete ${title} entry`}>
+        <div className="entry-modal-card delete-modal-card">
+          <p className="journal-section-kicker">Delete {title}</p>
+          <h2 className="entry-modal-title">Delete this entry?</h2>
+          <p className="entry-modal-copy">
+            This will remove the note below from your journal for the day.
+          </p>
+          <div className="delete-modal-entry">
+            {entry}
+          </div>
+          <div className="journal-composer-actions">
+            <button
+              type="button"
+              className="journal-secondary-button"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="delete-confirm-button"
+              onClick={onConfirm}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
 function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
   return (
     <>
       {isSignedIn && (
         <a
           className={isMobile ? 'nav-drawer-link nav-drawer-link-strong' : 'nav-link'}
-          href="/"
+          href="/week"
           onClick={onNavigate}
         >
           My week
@@ -237,6 +725,19 @@ function SiteNav() {
         }`}
       >
         <a className="brand" href="/" aria-label="FeelGood Friday home">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              d="M6 2a.5.5 0 0 1 .47.33L10 12.036l1.53-4.208A.5.5 0 0 1 12 7.5h3.5a.5.5 0 0 1 0 1h-3.15l-1.88 5.17a.5.5 0 0 1-.94 0L6 3.964 4.47 8.171A.5.5 0 0 1 4 8.5H.5a.5.5 0 0 1 0-1h3.15l1.88-5.17A.5.5 0 0 1 6 2"
+            />
+          </svg>
           FeelGood Friday
         </a>
 
@@ -574,12 +1075,343 @@ function WelcomePage() {
           </div>
 
           <div className="welcome-actions">
-            <a className="primary-button welcome-button" href={isSignedIn ? '/' : '/signin'}>
+            <a
+              className="primary-button welcome-button"
+              href={isSignedIn ? '/week' : '/signin'}
+            >
               Get started
             </a>
           </div>
         </article>
       </section>
+    </main>
+  )
+}
+
+function JournalOverviewPage() {
+  const today = new Date()
+  const currentDay = today.getDay()
+  const isWeekend = currentDay === 0 || currentDay === 6
+  const workweek = getWorkweek(today)
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const todayEntryKey = isWeekend ? 'weekend' : weekdayDefinitions[currentDay - 1].key
+  const [selectedDayKey, setSelectedDayKey] = useState(todayEntryKey)
+  const [journalEntries, setJournalEntries] = useState(() => createInitialJournalEntries(today))
+  const [composerState, setComposerState] = useState({
+    gratitude: false,
+    wins: false,
+  })
+  const [activeManagerSection, setActiveManagerSection] = useState(null)
+  const [draftState, setDraftState] = useState({
+    gratitude: '',
+    wins: '',
+  })
+  const [editingState, setEditingState] = useState({
+    gratitude: { index: null, value: '' },
+    wins: { index: null, value: '' },
+  })
+  const [pendingDeleteState, setPendingDeleteState] = useState(null)
+
+  const activeDay = workweek.find((day) => day.key === selectedDayKey)
+  const isActiveDayToday = !isWeekend && selectedDayKey === todayEntryKey
+  const activeDateLabel = isWeekend
+    ? formatDate(today)
+    : activeDay?.dateLabel ?? formatDate(today)
+  const activeHeading = isWeekend
+    ? 'Today'
+    : isActiveDayToday
+      ? 'Today'
+      : activeDay?.long
+  const activeEntries = journalEntries[selectedDayKey] ?? { gratitude: [], wins: [] }
+  const activeDayStart = activeDay
+    ? new Date(activeDay.date.getFullYear(), activeDay.date.getMonth(), activeDay.date.getDate())
+    : startOfToday
+  const isFutureDay = !isWeekend && activeDayStart.getTime() > startOfToday.getTime()
+  const daysUntilActive = isFutureDay
+    ? Math.round((activeDayStart.getTime() - startOfToday.getTime()) / 86400000)
+    : 0
+  const managerTitle = activeManagerSection === 'gratitude' ? 'Gratitude' : 'Win'
+  const managerEntries = activeManagerSection ? activeEntries[activeManagerSection] : []
+  const managerEditingIndex = activeManagerSection
+    ? editingState[activeManagerSection].index
+    : null
+  const managerEditingValue = activeManagerSection
+    ? editingState[activeManagerSection].value
+    : ''
+  const pendingDeleteEntry = pendingDeleteState
+    ? activeEntries[pendingDeleteState.section][pendingDeleteState.index]
+    : null
+
+  const resetJournalUiState = () => {
+    setComposerState({
+      gratitude: false,
+      wins: false,
+    })
+    setActiveManagerSection(null)
+    setPendingDeleteState(null)
+    setEditingState({
+      gratitude: { index: null, value: '' },
+      wins: { index: null, value: '' },
+    })
+  }
+
+  const handleOpenComposer = (section) => {
+    if (isFutureDay) {
+      return
+    }
+
+    setComposerState((current) => ({
+      ...current,
+      [section]: !current[section],
+    }))
+  }
+
+  const handleDraftChange = (section, value) => {
+    setDraftState((current) => ({
+      ...current,
+      [section]: value,
+    }))
+  }
+
+  const handleAddEntry = (section) => {
+    const nextEntry = draftState[section].trim()
+
+    if (!nextEntry) {
+      return
+    }
+
+    setJournalEntries((current) => ({
+      ...current,
+      [selectedDayKey]: {
+        ...current[selectedDayKey],
+        [section]: [...current[selectedDayKey][section], nextEntry],
+      },
+    }))
+    setDraftState((current) => ({
+      ...current,
+      [section]: '',
+    }))
+    setComposerState((current) => ({
+      ...current,
+      [section]: false,
+    }))
+  }
+
+  const handleOpenManager = (section) => {
+    if (isFutureDay) {
+      return
+    }
+
+    setActiveManagerSection(section)
+  }
+
+  const handleCloseManager = () => {
+    if (!activeManagerSection) {
+      return
+    }
+
+    handleCancelEditing(activeManagerSection)
+    handleCancelDelete()
+    setActiveManagerSection(null)
+  }
+
+  const handleStartEditing = (section, index) => {
+    setEditingState((current) => ({
+      ...current,
+      [section]: {
+        index,
+        value: journalEntries[selectedDayKey][section][index],
+      },
+    }))
+  }
+
+  const handleEditingChange = (section, value) => {
+    setEditingState((current) => ({
+      ...current,
+      [section]: {
+        ...current[section],
+        value,
+      },
+    }))
+  }
+
+  const handleCancelEditing = (section) => {
+    setEditingState((current) => ({
+      ...current,
+      [section]: {
+        index: null,
+        value: '',
+      },
+    }))
+  }
+
+  const handleSaveEdit = (section, index) => {
+    const nextValue = editingState[section].value.trim()
+
+    if (!nextValue) {
+      return
+    }
+
+    setJournalEntries((current) => ({
+      ...current,
+      [selectedDayKey]: {
+        ...current[selectedDayKey],
+        [section]: current[selectedDayKey][section].map((entry, entryIndex) =>
+          entryIndex === index ? nextValue : entry,
+        ),
+      },
+    }))
+    handleCancelEditing(section)
+  }
+
+  const handleDeleteEntry = (section, index) => {
+    setJournalEntries((current) => ({
+      ...current,
+      [selectedDayKey]: {
+        ...current[selectedDayKey],
+        [section]: current[selectedDayKey][section].filter(
+          (_, entryIndex) => entryIndex !== index,
+        ),
+      },
+    }))
+
+    if (editingState[section].index === index) {
+      handleCancelEditing(section)
+    }
+
+    handleCancelDelete()
+  }
+
+  const handleRequestDelete = (section, index) => {
+    setPendingDeleteState({ section, index })
+  }
+
+  const handleCancelDelete = () => {
+    setPendingDeleteState(null)
+  }
+
+  const handleSelectDay = (dayKey) => {
+    resetJournalUiState()
+    setSelectedDayKey(dayKey)
+  }
+
+  return (
+    <main className="page-shell">
+      <SiteNav />
+
+      <div className="journal-overview-shell">
+        <PositiveQuoteBanner />
+
+        <section className="journal-day-selector" aria-label="Weekday journal selector">
+          {isWeekend ? (
+            <div className="weekend-banner">
+              <p className="weekend-banner-kicker">Weekend mode</p>
+              <h2>Enjoy your weekend!</h2>
+              <p>
+                You made it through the week. Take the softer pace where you can.
+              </p>
+            </div>
+          ) : (
+            <div className="day-pill-row">
+              {workweek.map((day) => (
+                <button
+                  key={day.key}
+                  type="button"
+                  className={`day-pill ${selectedDayKey === day.key ? 'day-pill-active' : ''}`}
+                  onClick={() => handleSelectDay(day.key)}
+                >
+                  <span>{day.short}</span>
+                  <small>{day.dateLabel.slice(0, 5)}</small>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="journal-overview-card">
+          <div className="journal-overview-header">
+            <div>
+              <p className="section-kicker">Journal</p>
+              <h1 className="journal-overview-title">{activeHeading}</h1>
+              <p className="journal-overview-date">{activeDateLabel}</p>
+            </div>
+            <p className="journal-overview-copy">
+              Keep it short. One line is enough to make the day easier to remember.
+            </p>
+          </div>
+
+          <div className="journal-sections-grid">
+            <JournalSection
+              title="Gratitude"
+              entries={activeEntries.gratitude}
+              placeholderEntries={
+                isFutureDay && activeEntries.gratitude.length === 0
+                  ? futurePlaceholders.gratitude
+                  : null
+              }
+              draftValue={draftState.gratitude}
+              isComposerOpen={composerState.gratitude}
+              isLocked={isFutureDay}
+              onDraftChange={(value) => handleDraftChange('gratitude', value)}
+              onToggleComposer={() => handleOpenComposer('gratitude')}
+              onAddEntry={() => handleAddEntry('gratitude')}
+              onOpenManager={() => handleOpenManager('gratitude')}
+            />
+            <JournalSection
+              title="Win"
+              entries={activeEntries.wins}
+              placeholderEntries={
+                isFutureDay && activeEntries.wins.length === 0
+                  ? futurePlaceholders.wins
+                  : null
+              }
+              draftValue={draftState.wins}
+              isComposerOpen={composerState.wins}
+              isLocked={isFutureDay}
+              onDraftChange={(value) => handleDraftChange('wins', value)}
+              onToggleComposer={() => handleOpenComposer('wins')}
+              onAddEntry={() => handleAddEntry('wins')}
+              onOpenManager={() => handleOpenManager('wins')}
+            />
+          </div>
+
+          {isFutureDay && (
+            <div className="journal-future-note">
+              <p className="journal-future-note-kicker">Not yet</p>
+              <p>
+                Hey, come back here {daysUntilActive === 1 ? 'tomorrow' : `in ${daysUntilActive} days`} to add your wins and gratitudes!
+              </p>
+            </div>
+          )}
+
+        </section>
+      </div>
+
+      {activeManagerSection && (
+        <ManageEntriesModal
+          title={managerTitle}
+          entries={managerEntries}
+          editingIndex={managerEditingIndex}
+          editingValue={managerEditingValue}
+          onCancel={handleCloseManager}
+          onStartEditing={(index) => handleStartEditing(activeManagerSection, index)}
+          onEditingChange={(value) => handleEditingChange(activeManagerSection, value)}
+          onCancelEditing={() => handleCancelEditing(activeManagerSection)}
+          onSaveEdit={(index) => handleSaveEdit(activeManagerSection, index)}
+          onRequestDelete={(index) => handleRequestDelete(activeManagerSection, index)}
+        />
+      )}
+
+      {pendingDeleteState && pendingDeleteEntry && (
+        <DeleteEntryModal
+          title={pendingDeleteState.section === 'gratitude' ? 'Gratitude' : 'Win'}
+          entry={pendingDeleteEntry}
+          onCancel={handleCancelDelete}
+          onConfirm={() =>
+            handleDeleteEntry(pendingDeleteState.section, pendingDeleteState.index)
+          }
+        />
+      )}
     </main>
   )
 }
@@ -700,6 +1532,10 @@ function App() {
 
   if (path === '/welcome') {
     return <WelcomePage />
+  }
+
+  if (path === '/week') {
+    return <JournalOverviewPage />
   }
 
   if (path === '/about') {
