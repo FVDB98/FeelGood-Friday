@@ -8,9 +8,6 @@ import {
 import { useEffect, useState } from 'react'
 import './App.css'
 
-const QUOTE_ROTATION_MS = 7500
-const QUOTE_TRANSITION_MS = 650
-
 const highlights = [
   {
     title: 'Daily gratitude',
@@ -64,59 +61,6 @@ const quickStats = [
   { value: '2', suffix: 'mins / day' },
   { value: '5', suffix: 'times / week' },
   { value: 'Unlimited', suffix: 'positives' },
-]
-
-const upliftingQuotes = [
-  "You got this!",
-  "Keep going—you're close.",
-  "Better days are coming.",
-  "One step at a time.",
-  "You’re doing amazing.",
-  "Progress, not perfection.",
-  "This is your moment.",
-  "You’re stronger than you think.",
-  "Let’s try again today.",
-  "You’re on your way.",
-  "Small wins matter.",
-  "Trust yourself more.",
-  "You can do hard things.",
-  "Bright things ahead.",
-  "Your effort counts.",
-  "Today is a fresh start.",
-  "You’re growing every day.",
-  "Keep shining.",
-  "You’re not alone.",
-  "You’re capable and ready.",
-  "Take it one breath.",
-  "Your future is bright.",
-  "Keep choosing you.",
-  "You’re making it happen.",
-  "Hope looks good on you.",
-  "You’re allowed to begin.",
-  "It’s okay—keep moving.",
-  "You’re building something beautiful.",
-  "You’re closer than yesterday.",
-  "You’re doing your best.",
-  "Good things take time.",
-  "You’re full of potential.",
-  "You can start now.",
-  "You’re brave for trying.",
-  "This will pass too.",
-  "You’re doing better than you know.",
-  "The best is unfolding.",
-  "You’re becoming unstoppable.",
-  "Let hope lead.",
-  "You’re right where you need.",
-  "Keep the faith.",
-  "You’re meant for more.",
-  "You’ve come so far.",
-  "Your light is real.",
-  "You’re built for this.",
-  "You’re allowed to bloom.",
-  "It’s going to work out.",
-  "You’re not starting over—restarting.",
-  "You’re getting stronger.",
-  "The next step is enough.",
 ]
 
 const weekdayDefinitions = [
@@ -279,61 +223,6 @@ function JournalNotes({ items }) {
         <li key={item}>{item}</li>
       ))}
     </ul>
-  )
-}
-
-function PositiveQuoteBanner() {
-  const [quoteIndex, setQuoteIndex] = useState(() =>
-    Math.floor(Math.random() * upliftingQuotes.length),
-  )
-  const [quoteAnimationState, setQuoteAnimationState] = useState('idle')
-
-  useEffect(() => {
-    let exitTimeoutId
-    let enterTimeoutId
-
-    const rotateQuote = () => {
-      setQuoteAnimationState('exit')
-
-      exitTimeoutId = window.setTimeout(() => {
-        setQuoteIndex((currentIndex) => {
-          let nextIndex = currentIndex
-
-          while (nextIndex === currentIndex) {
-            nextIndex = Math.floor(Math.random() * upliftingQuotes.length)
-          }
-
-          return nextIndex
-        })
-
-        setQuoteAnimationState('enter')
-
-        enterTimeoutId = window.setTimeout(() => {
-          setQuoteAnimationState('idle')
-        }, QUOTE_TRANSITION_MS)
-      }, QUOTE_TRANSITION_MS)
-    }
-
-    const interval = window.setInterval(() => {
-      rotateQuote()
-    }, QUOTE_ROTATION_MS)
-
-    return () => {
-      window.clearInterval(interval)
-      window.clearTimeout(exitTimeoutId)
-      window.clearTimeout(enterTimeoutId)
-    }
-  }, [])
-
-  return (
-    <section className="quote-banner" aria-label="Positive quote">
-      <p className="quote-banner-kicker">A little lift for today</p>
-      <div className="quote-banner-text-shell">
-        <p className={`quote-banner-text quote-banner-text-${quoteAnimationState}`}>
-          {upliftingQuotes[quoteIndex]}
-        </p>
-      </div>
-    </section>
   )
 }
 
@@ -1335,8 +1224,6 @@ function JournalOverviewPage() {
       <SiteNav />
 
       <div className="journal-overview-shell">
-        <PositiveQuoteBanner />
-
         <section className="journal-day-selector" aria-label="Weekday journal selector">
           {isWeekend ? (
             <div className="weekend-banner">
@@ -1365,14 +1252,28 @@ function JournalOverviewPage() {
 
         <section className="journal-overview-card">
           <div className="journal-overview-header">
-            <div>
-              <p className="section-kicker">Journal</p>
+            <div className="journal-overview-header-copy">
+              <p className="section-kicker">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                  aria-hidden="true"
+                >
+                  <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811z" />
+                  <path d="M8.5 2.687c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
+                  <path d="M8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783" />
+                </svg>
+                Journal
+              </p>
               <h1 className="journal-overview-title">{activeHeading}</h1>
               <p className="journal-overview-date">{activeDateLabel}</p>
+              <p className="journal-overview-copy">
+                Keep it short. One line is enough to make the day easier to remember.
+              </p>
             </div>
-            <p className="journal-overview-copy">
-              Keep it short. One line is enough to make the day easier to remember.
-            </p>
           </div>
 
           <div className="journal-sections-grid">

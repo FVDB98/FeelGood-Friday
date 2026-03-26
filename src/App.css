@@ -698,10 +698,6 @@
   margin: 0 auto;
 }
 
-.quote-banner {
-  padding: 0;
-}
-
 .quote-banner-kicker,
 .journal-section-kicker,
 .weekend-banner-kicker {
@@ -713,62 +709,6 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.quote-banner-text {
-  color: var(--text-strong);
-  font-size: 0.74rem;
-  line-height: 1.4;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin: 0;
-  will-change: transform, opacity;
-}
-
-.quote-banner-text-shell {
-  position: relative;
-  overflow: hidden;
-  min-height: calc(1.2rem * 1.45 * 2);
-}
-
-.quote-banner-text-exit {
-  animation: quote-swipe-out 650ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
-}
-
-.quote-banner-text-enter {
-  animation: quote-swipe-in 650ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-@keyframes quote-swipe-out {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  to {
-    opacity: 0;
-    transform: translateY(-100%);
-  }
-}
-
-@keyframes quote-swipe-in {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .quote-banner-text-exit,
-  .quote-banner-text-enter {
-    animation: none;
-  }
 }
 
 .journal-day-selector {
@@ -843,12 +783,17 @@
   margin-bottom: 1rem;
 }
 
+.journal-overview-header-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .journal-overview-title {
   font-size: clamp(2rem, 7vw, 3.2rem);
 }
 
 .journal-overview-date {
-  margin-top: 0.35rem;
+  margin-top: 0.1rem;
   color: rgba(36, 49, 44, 0.58);
   font-size: 0.95rem;
   font-weight: 600;
@@ -1375,7 +1320,6 @@
     padding: 2rem;
   }
 
-  .quote-banner,
   .weekend-banner,
   .journal-overview-card {
     padding: 1.5rem;
