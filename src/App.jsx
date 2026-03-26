@@ -8,6 +8,9 @@ import {
 import { useEffect, useState } from 'react'
 import './App.css'
 
+const QUOTE_ROTATION_MS = 7500
+const QUOTE_TRANSITION_MS = 650
+
 const highlights = [
   {
     title: 'Daily gratitude',
@@ -283,29 +286,53 @@ function PositiveQuoteBanner() {
   const [quoteIndex, setQuoteIndex] = useState(() =>
     Math.floor(Math.random() * upliftingQuotes.length),
   )
+  const [quoteAnimationState, setQuoteAnimationState] = useState('idle')
 
   useEffect(() => {
+    let exitTimeoutId
+    let enterTimeoutId
+
+    const rotateQuote = () => {
+      setQuoteAnimationState('exit')
+
+      exitTimeoutId = window.setTimeout(() => {
+        setQuoteIndex((currentIndex) => {
+          let nextIndex = currentIndex
+
+          while (nextIndex === currentIndex) {
+            nextIndex = Math.floor(Math.random() * upliftingQuotes.length)
+          }
+
+          return nextIndex
+        })
+
+        setQuoteAnimationState('enter')
+
+        enterTimeoutId = window.setTimeout(() => {
+          setQuoteAnimationState('idle')
+        }, QUOTE_TRANSITION_MS)
+      }, QUOTE_TRANSITION_MS)
+    }
+
     const interval = window.setInterval(() => {
-      setQuoteIndex((currentIndex) => {
-        let nextIndex = currentIndex
-
-        while (nextIndex === currentIndex) {
-          nextIndex = Math.floor(Math.random() * upliftingQuotes.length)
-        }
-
-        return nextIndex
-      })
-    }, 5500)
+      rotateQuote()
+    }, QUOTE_ROTATION_MS)
 
     return () => {
       window.clearInterval(interval)
+      window.clearTimeout(exitTimeoutId)
+      window.clearTimeout(enterTimeoutId)
     }
   }, [])
 
   return (
     <section className="quote-banner" aria-label="Positive quote">
       <p className="quote-banner-kicker">A little lift for today</p>
-      <p className="quote-banner-text">{upliftingQuotes[quoteIndex]}</p>
+      <div className="quote-banner-text-shell">
+        <p className={`quote-banner-text quote-banner-text-${quoteAnimationState}`}>
+          {upliftingQuotes[quoteIndex]}
+        </p>
+      </div>
     </section>
   )
 }
