@@ -84,6 +84,7 @@
 }
 
 .nav-link {
+  position: relative;
   color: var(--green-700);
   font-weight: 600;
 }
@@ -91,6 +92,12 @@
 .nav-link:hover,
 .sign-in-link:hover {
   color: var(--green-800);
+}
+
+.nav-link-active {
+  text-decoration: underline;
+  text-underline-offset: 0.22rem;
+  text-decoration-thickness: 0.1rem;
 }
 
 .user-button-shell {
@@ -225,6 +232,10 @@
 .nav-drawer-link-strong,
 .nav-drawer-signin {
   color: var(--green-800);
+}
+
+.nav-drawer-link-active {
+  color: var(--green-700);
 }
 
 .nav-drawer-footer {

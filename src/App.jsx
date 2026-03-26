@@ -655,11 +655,15 @@ function DeleteEntryModal({
 }
 
 function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
+  const currentPath = window.location.pathname
+
   return (
     <>
       {isSignedIn && (
         <a
-          className={isMobile ? 'nav-drawer-link nav-drawer-link-strong' : 'nav-link'}
+          className={`${
+            isMobile ? 'nav-drawer-link' : 'nav-link'
+          }${currentPath === '/week' ? ` ${isMobile ? 'nav-drawer-link-active' : 'nav-link-active'}` : ''}`}
           href="/week"
           onClick={onNavigate}
         >
@@ -669,7 +673,11 @@ function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
       {navItems.map((item) => (
         <a
           key={item.href}
-          className={isMobile ? 'nav-drawer-link' : 'nav-link'}
+          className={`${isMobile ? 'nav-drawer-link' : 'nav-link'}${
+            currentPath === item.href
+              ? ` ${isMobile ? 'nav-drawer-link-active' : 'nav-link-active'}`
+              : ''
+          }`}
           href={item.href}
           onClick={onNavigate}
         >
