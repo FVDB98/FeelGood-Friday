@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "db:schema": "node scripts/apply-schema.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@clerk/react": "^6.1.2",
+    "dotenv": "^16.6.1",
+    "pg": "^8.16.3",
+    "@supabase/supabase-js": "^2.56.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

@@ -806,6 +806,24 @@
   line-height: 1.6;
 }
 
+.journal-status-note {
+  margin-bottom: 1rem;
+  padding: 0.95rem 1rem;
+  background: linear-gradient(180deg, #f8fcf9, var(--green-050));
+  border: 1px solid var(--green-100);
+  border-radius: 1.1rem;
+}
+
+.journal-status-note p {
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.journal-status-note-error {
+  background: linear-gradient(180deg, #fff8f8, #fff1f1);
+  border-color: rgba(200, 87, 87, 0.2);
+}
+
 .journal-sections-grid {
   display: grid;
   gap: 1rem;

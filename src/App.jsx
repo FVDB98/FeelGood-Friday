@@ -7,6 +7,13 @@ import {
 } from '@clerk/react'
 import { useEffect, useState } from 'react'
 import './App.css'
+import {
+  createEntry,
+  deleteEntry,
+  fetchCurrentWeek,
+  syncCurrentUser,
+  updateEntry,
+} from './lib/api.js'
 
 const highlights = [
   {
@@ -82,6 +89,22 @@ const futurePlaceholders = {
     'Something you will feel proud of later.',
     'A bit of progress that deserves noticing.',
   ],
+}
+
+const dayNumberByKey = {
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+}
+
+const dayKeyByNumber = {
+  1: 'mon',
+  2: 'tue',
+  3: 'wed',
+  4: 'thu',
+  5: 'fri',
 }
 
 const navItems = [
@@ -172,48 +195,41 @@ function getWorkweek(referenceDate) {
   })
 }
 
-function createInitialJournalEntries(referenceDate) {
-  const currentDay = referenceDate.getDay()
-  const allEntries = {
-    mon: {
-      gratitude: ['A steady start and a bit of morning calm.'],
-      wins: ['Got back into the rhythm of the week.'],
-    },
-    tue: {
-      gratitude: ['A good meal and a thoughtful check-in from a friend.'],
-      wins: ['Finished the task I had been putting off.'],
-    },
-    wed: {
-      gratitude: ['A brighter mood by the middle of the week.'],
-      wins: ['Made time for a short walk and reset.'],
-    },
-    thu: {
-      gratitude: ['A calmer evening and a clearer head.'],
-      wins: ['Wrapped up a few loose ends before Friday.'],
-    },
-    fri: {
-      gratitude: ['The feeling of making it through the week.'],
-      wins: ['Held onto momentum and kept showing up.'],
-    },
-    weekend: {
-      gratitude: ['A slower pace and space to recharge.'],
-      wins: ['Protected time for rest without guilt.'],
-    },
+function createEmptyJournalEntries() {
+  return {
+    mon: { gratitude: [], wins: [] },
+    tue: { gratitude: [], wins: [] },
+    wed: { gratitude: [], wins: [] },
+    thu: { gratitude: [], wins: [] },
+    fri: { gratitude: [], wins: [] },
+    weekend: { gratitude: [], wins: [] },
+  }
+}
+
+function mapWeekToJournalEntries(week) {
+  const nextEntries = createEmptyJournalEntries()
+
+  for (const entry of week?.entries ?? []) {
+    const dayKey = dayKeyByNumber[entry.dayOfWeek]
+    const section = entry.entryType === 'win' ? 'wins' : 'gratitude'
+
+    if (!dayKey || !nextEntries[dayKey]) {
+      continue
+    }
+
+    nextEntries[dayKey][section].push({
+      id: entry.id,
+      content: entry.content,
+      enteredAt: entry.enteredAt,
+      updatedAt: entry.updatedAt,
+    })
   }
 
-  if (currentDay === 0 || currentDay === 6) {
-    return allEntries
-  }
+  return nextEntries
+}
 
-  return weekdayDefinitions.reduce((accumulator, day, index) => {
-    const isAvailable = index <= currentDay - 1
-
-    accumulator[day.key] = isAvailable
-      ? allEntries[day.key]
-      : { gratitude: [], wins: [] }
-
-    return accumulator
-  }, { weekend: allEntries.weekend })
+function getFirstEntryContent(entries) {
+  return entries[0]?.content ?? 'Nothing added yet.'
 }
 
 function JournalNotes({ items }) {
@@ -397,7 +413,7 @@ function ManageEntriesModal({
           </p>
           <div className="entry-modal-list">
             {entries.map((entry, index) => (
-              <div className="entry-modal-item" key={`${entry}-${index}`}>
+              <div className="entry-modal-item" key={entry.id ?? `${entry.content}-${index}`}>
                 {editingIndex === index ? (
                   <>
                     <textarea
@@ -426,7 +442,7 @@ function ManageEntriesModal({
                   </>
                 ) : (
                   <div className="entry-modal-row">
-                    <span className="journal-entry-text">{entry}</span>
+                    <span className="journal-entry-text">{entry.content}</span>
                     <div className="journal-entry-icon-actions">
                       <button
                         type="button"
@@ -519,7 +535,7 @@ function DeleteEntryModal({
             This will remove the note below from your journal for the day.
           </p>
           <div className="delete-modal-entry">
-            {entry}
+            {entry.content}
           </div>
           <div className="journal-composer-actions">
             <button
@@ -1024,6 +1040,8 @@ function WelcomePage() {
 }
 
 function JournalOverviewPage() {
+  const { getToken, isSignedIn } = useAuth()
+  const { user } = useUser()
   const today = new Date()
   const currentDay = today.getDay()
   const isWeekend = currentDay === 0 || currentDay === 6
@@ -1031,7 +1049,10 @@ function JournalOverviewPage() {
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
   const todayEntryKey = isWeekend ? 'weekend' : weekdayDefinitions[currentDay - 1].key
   const [selectedDayKey, setSelectedDayKey] = useState(todayEntryKey)
-  const [journalEntries, setJournalEntries] = useState(() => createInitialJournalEntries(today))
+  const [journalEntries, setJournalEntries] = useState(() => createEmptyJournalEntries())
+  const [isLoadingWeek, setIsLoadingWeek] = useState(true)
+  const [isMutating, setIsMutating] = useState(false)
+  const [apiError, setApiError] = useState('')
   const [composerState, setComposerState] = useState({
     gratitude: false,
     wins: false,
@@ -1046,6 +1067,7 @@ function JournalOverviewPage() {
     wins: { index: null, value: '' },
   })
   const [pendingDeleteState, setPendingDeleteState] = useState(null)
+  const activeDayKey = selectedDayKey === 'weekend' ? 'fri' : selectedDayKey
 
   const activeDay = workweek.find((day) => day.key === selectedDayKey)
   const isActiveDayToday = !isWeekend && selectedDayKey === todayEntryKey
@@ -1057,11 +1079,12 @@ function JournalOverviewPage() {
     : isActiveDayToday
       ? 'Today'
       : activeDay?.long
-  const activeEntries = journalEntries[selectedDayKey] ?? { gratitude: [], wins: [] }
+  const activeEntries = journalEntries[activeDayKey] ?? { gratitude: [], wins: [] }
   const activeDayStart = activeDay
     ? new Date(activeDay.date.getFullYear(), activeDay.date.getMonth(), activeDay.date.getDate())
     : startOfToday
   const isFutureDay = !isWeekend && activeDayStart.getTime() > startOfToday.getTime()
+  const isLocked = isFutureDay || selectedDayKey === 'weekend'
   const daysUntilActive = isFutureDay
     ? Math.round((activeDayStart.getTime() - startOfToday.getTime()) / 86400000)
     : 0
@@ -1077,6 +1100,42 @@ function JournalOverviewPage() {
     ? activeEntries[pendingDeleteState.section][pendingDeleteState.index]
     : null
 
+  useEffect(() => {
+    if (!isSignedIn || !user?.id) {
+      setIsLoadingWeek(false)
+      return undefined
+    }
+
+    let isCancelled = false
+
+    const loadWeek = async () => {
+      try {
+        setIsLoadingWeek(true)
+        setApiError('')
+        await syncCurrentUser(getToken, user)
+        const response = await fetchCurrentWeek(getToken, user.id)
+
+        if (!isCancelled) {
+          setJournalEntries(mapWeekToJournalEntries(response.week))
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setApiError(error.message)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingWeek(false)
+        }
+      }
+    }
+
+    void loadWeek()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [getToken, isSignedIn, user])
+
   const resetJournalUiState = () => {
     setComposerState({
       gratitude: false,
@@ -1091,7 +1150,7 @@ function JournalOverviewPage() {
   }
 
   const handleOpenComposer = (section) => {
-    if (isFutureDay) {
+    if (isLocked || isMutating) {
       return
     }
 
@@ -1108,32 +1167,47 @@ function JournalOverviewPage() {
     }))
   }
 
-  const handleAddEntry = (section) => {
+  const handleAddEntry = async (section) => {
     const nextEntry = draftState[section].trim()
+    const dayOfWeek = dayNumberByKey[activeDayKey]
 
-    if (!nextEntry) {
+    if (!nextEntry || !dayOfWeek) {
       return
     }
 
-    setJournalEntries((current) => ({
-      ...current,
-      [selectedDayKey]: {
-        ...current[selectedDayKey],
-        [section]: [...current[selectedDayKey][section], nextEntry],
-      },
-    }))
-    setDraftState((current) => ({
-      ...current,
-      [section]: '',
-    }))
-    setComposerState((current) => ({
-      ...current,
-      [section]: false,
-    }))
+    try {
+      setIsMutating(true)
+      setApiError('')
+      const response = await createEntry(getToken, user.id, {
+        day: dayOfWeek,
+        entryType: section === 'wins' ? 'win' : 'gratitude',
+        content: nextEntry,
+      })
+
+      setJournalEntries((current) => ({
+        ...current,
+        [activeDayKey]: {
+          ...current[activeDayKey],
+          [section]: [...current[activeDayKey][section], response.entry],
+        },
+      }))
+      setDraftState((current) => ({
+        ...current,
+        [section]: '',
+      }))
+      setComposerState((current) => ({
+        ...current,
+        [section]: false,
+      }))
+    } catch (error) {
+      setApiError(error.message)
+    } finally {
+      setIsMutating(false)
+    }
   }
 
   const handleOpenManager = (section) => {
-    if (isFutureDay) {
+    if (isLocked || isMutating) {
       return
     }
 
@@ -1155,7 +1229,7 @@ function JournalOverviewPage() {
       ...current,
       [section]: {
         index,
-        value: journalEntries[selectedDayKey][section][index],
+        value: journalEntries[activeDayKey][section][index].content,
       },
     }))
   }
@@ -1180,55 +1254,116 @@ function JournalOverviewPage() {
     }))
   }
 
-  const handleSaveEdit = (section, index) => {
+  const handleSaveEdit = async (section, index) => {
     const nextValue = editingState[section].value.trim()
+    const entry = journalEntries[activeDayKey][section][index]
 
-    if (!nextValue) {
+    if (!nextValue || !entry?.id) {
       return
     }
 
-    setJournalEntries((current) => ({
-      ...current,
-      [selectedDayKey]: {
-        ...current[selectedDayKey],
-        [section]: current[selectedDayKey][section].map((entry, entryIndex) =>
-          entryIndex === index ? nextValue : entry,
-        ),
-      },
-    }))
-    handleCancelEditing(section)
+    try {
+      setIsMutating(true)
+      setApiError('')
+      const response = await updateEntry(getToken, entry.id, {
+        content: nextValue,
+      })
+
+      setJournalEntries((current) => ({
+        ...current,
+        [activeDayKey]: {
+          ...current[activeDayKey],
+          [section]: current[activeDayKey][section].map((currentEntry, entryIndex) =>
+            entryIndex === index ? response.entry : currentEntry,
+          ),
+        },
+      }))
+      handleCancelEditing(section)
+    } catch (error) {
+      setApiError(error.message)
+    } finally {
+      setIsMutating(false)
+    }
   }
 
-  const handleDeleteEntry = (section, index) => {
-    setJournalEntries((current) => ({
-      ...current,
-      [selectedDayKey]: {
-        ...current[selectedDayKey],
-        [section]: current[selectedDayKey][section].filter(
-          (_, entryIndex) => entryIndex !== index,
-        ),
-      },
-    }))
+  const handleDeleteEntry = async (section, index) => {
+    const entry = journalEntries[activeDayKey][section][index]
 
-    if (editingState[section].index === index) {
-      handleCancelEditing(section)
+    if (!entry?.id) {
+      return
     }
 
-    handleCancelDelete()
+    try {
+      setIsMutating(true)
+      setApiError('')
+      await deleteEntry(getToken, entry.id)
+
+      setJournalEntries((current) => ({
+        ...current,
+        [activeDayKey]: {
+          ...current[activeDayKey],
+          [section]: current[activeDayKey][section].filter(
+            (_, entryIndex) => entryIndex !== index,
+          ),
+        },
+      }))
+
+      if (editingState[section].index === index) {
+        handleCancelEditing(section)
+      }
+
+      handleCancelDelete()
+    } catch (error) {
+      setApiError(error.message)
+    } finally {
+      setIsMutating(false)
+    }
   }
 
   const handleRequestDelete = (section, index) => {
+    if (isMutating) {
+      return
+    }
+
     setPendingDeleteState({ section, index })
   }
 
   const handleCancelDelete = () => {
+    if (isMutating) {
+      return
+    }
+
     setPendingDeleteState(null)
   }
 
   const handleSelectDay = (dayKey) => {
+    if (isMutating) {
+      return
+    }
+
     resetJournalUiState()
     setSelectedDayKey(dayKey)
   }
+
+  if (!isSignedIn || !user?.id) {
+    return (
+      <main className="page-shell">
+        <SiteNav />
+        <section className="info-page-shell">
+          <article className="info-page-card">
+            <p className="section-kicker">Journal</p>
+            <h1 className="info-page-title">Log in to view your journal</h1>
+            <p className="info-page-description">
+              Your weekly entries are tied to your account, so this page is only available when signed in.
+            </p>
+          </article>
+        </section>
+      </main>
+    )
+  }
+
+  const gratitudeContent = activeEntries.gratitude.map((entry) => entry.content)
+  const winsContent = activeEntries.wins.map((entry) => entry.content)
 
   return (
     <main className="page-shell">
@@ -1287,18 +1422,30 @@ function JournalOverviewPage() {
             </div>
           </div>
 
+          {isLoadingWeek && (
+            <div className="journal-status-note">
+              <p>Loading this week&apos;s entries...</p>
+            </div>
+          )}
+
+          {apiError && (
+            <div className="journal-status-note journal-status-note-error">
+              <p>{apiError}</p>
+            </div>
+          )}
+
           <div className="journal-sections-grid">
             <JournalSection
               title="Gratitude"
-              entries={activeEntries.gratitude}
+              entries={gratitudeContent}
               placeholderEntries={
-                isFutureDay && activeEntries.gratitude.length === 0
+                isFutureDay && gratitudeContent.length === 0
                   ? futurePlaceholders.gratitude
                   : null
               }
               draftValue={draftState.gratitude}
               isComposerOpen={composerState.gratitude}
-              isLocked={isFutureDay}
+              isLocked={isLocked}
               onDraftChange={(value) => handleDraftChange('gratitude', value)}
               onToggleComposer={() => handleOpenComposer('gratitude')}
               onAddEntry={() => handleAddEntry('gratitude')}
@@ -1306,15 +1453,15 @@ function JournalOverviewPage() {
             />
             <JournalSection
               title="Win"
-              entries={activeEntries.wins}
+              entries={winsContent}
               placeholderEntries={
-                isFutureDay && activeEntries.wins.length === 0
+                isFutureDay && winsContent.length === 0
                   ? futurePlaceholders.wins
                   : null
               }
               draftValue={draftState.wins}
               isComposerOpen={composerState.wins}
-              isLocked={isFutureDay}
+              isLocked={isLocked}
               onDraftChange={(value) => handleDraftChange('wins', value)}
               onToggleComposer={() => handleOpenComposer('wins')}
               onAddEntry={() => handleAddEntry('wins')}
@@ -1331,6 +1478,11 @@ function JournalOverviewPage() {
             </div>
           )}
 
+          {selectedDayKey === 'weekend' && (
+            <div className="journal-status-note">
+              <p>Weekend entries are read-only for now. New notes start again next week.</p>
+            </div>
+          )}
         </section>
       </div>
 
@@ -1467,12 +1619,68 @@ function FAQPage() {
 }
 
 function RecapPage() {
-  const today = new Date()
-  const entries = createInitialJournalEntries(today)
+  const { getToken, isSignedIn } = useAuth()
+  const { user } = useUser()
+  const [entries, setEntries] = useState(() => createEmptyJournalEntries())
+  const [isLoadingWeek, setIsLoadingWeek] = useState(true)
+  const [apiError, setApiError] = useState('')
   const recapDays = weekdayDefinitions.map((day) => ({
     ...day,
     entries: entries[day.key] ?? { gratitude: [], wins: [] },
   }))
+
+  useEffect(() => {
+    if (!isSignedIn || !user?.id) {
+      setIsLoadingWeek(false)
+      return undefined
+    }
+
+    let isCancelled = false
+
+    const loadRecap = async () => {
+      try {
+        setIsLoadingWeek(true)
+        setApiError('')
+        await syncCurrentUser(getToken, user)
+        const response = await fetchCurrentWeek(getToken, user.id)
+
+        if (!isCancelled) {
+          setEntries(mapWeekToJournalEntries(response.week))
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setApiError(error.message)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingWeek(false)
+        }
+      }
+    }
+
+    void loadRecap()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [getToken, isSignedIn, user])
+
+  if (!isSignedIn || !user?.id) {
+    return (
+      <main className="page-shell">
+        <SiteNav />
+        <section className="info-page-shell">
+          <article className="info-page-card">
+            <p className="section-kicker">My recap</p>
+            <h1 className="info-page-title">Log in to view your recap</h1>
+            <p className="info-page-description">
+              Weekly recaps are tied to your account, so this page is only available when signed in.
+            </p>
+          </article>
+        </section>
+      </main>
+    )
+  }
 
   return (
     <main className="page-shell">
@@ -1500,12 +1708,22 @@ function RecapPage() {
             week as a whole.
           </p>
           <div className="info-page-content">
+            {isLoadingWeek && (
+              <div className="journal-status-note">
+                <p>Loading your weekly recap...</p>
+              </div>
+            )}
+            {apiError && (
+              <div className="journal-status-note journal-status-note-error">
+                <p>{apiError}</p>
+              </div>
+            )}
             <div className="highlight-grid">
               {recapDays.map((day) => (
                 <article className="highlight-card" key={day.key}>
                   <h2>{day.long}</h2>
-                  <p><strong>Gratitude:</strong> {day.entries.gratitude[0] ?? 'Nothing added yet.'}</p>
-                  <p><strong>Win:</strong> {day.entries.wins[0] ?? 'Nothing added yet.'}</p>
+                  <p><strong>Gratitude:</strong> {getFirstEntryContent(day.entries.gratitude)}</p>
+                  <p><strong>Win:</strong> {getFirstEntryContent(day.entries.wins)}</p>
                 </article>
               ))}
             </div>
