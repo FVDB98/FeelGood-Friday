@@ -559,6 +559,17 @@ function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
           My week
         </a>
       )}
+      {isSignedIn && (
+        <a
+          className={`${
+            isMobile ? 'nav-drawer-link' : 'nav-link'
+          }${currentPath === '/recap' ? ` ${isMobile ? 'nav-drawer-link-active' : 'nav-link-active'}` : ''}`}
+          href="/recap"
+          onClick={onNavigate}
+        >
+          My recap
+        </a>
+      )}
       {navItems.map((item) => (
         <a
           key={item.href}
@@ -1455,6 +1466,56 @@ function FAQPage() {
   )
 }
 
+function RecapPage() {
+  const today = new Date()
+  const entries = createInitialJournalEntries(today)
+  const recapDays = weekdayDefinitions.map((day) => ({
+    ...day,
+    entries: entries[day.key] ?? { gratitude: [], wins: [] },
+  }))
+
+  return (
+    <main className="page-shell">
+      <SiteNav />
+
+      <section className="info-page-shell">
+        <article className="info-page-card">
+          <p className="section-kicker">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+            >
+              <path d="M8 0a.5.5 0 0 1 .5.5v1.793l.146-.147a.5.5 0 0 1 .708.708L8.207 4H10.5a.5.5 0 0 1 0 1H8a.5.5 0 0 1-.5-.5V.5A.5.5 0 0 1 8 0" />
+              <path d="M3.5 3A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5v-5a.5.5 0 0 1 1 0v5A2.5 2.5 0 0 1 12.5 15h-9A2.5 2.5 0 0 1 1 12.5v-8A2.5 2.5 0 0 1 3.5 2h5a.5.5 0 0 1 0 1z" />
+            </svg>
+            My recap
+          </p>
+          <h1 className="info-page-title">A simple look back at your week</h1>
+          <p className="info-page-description">
+            Your gratitude notes and wins come together here so you can see the
+            week as a whole.
+          </p>
+          <div className="info-page-content">
+            <div className="highlight-grid">
+              {recapDays.map((day) => (
+                <article className="highlight-card" key={day.key}>
+                  <h2>{day.long}</h2>
+                  <p><strong>Gratitude:</strong> {day.entries.gratitude[0] ?? 'Nothing added yet.'}</p>
+                  <p><strong>Win:</strong> {day.entries.wins[0] ?? 'Nothing added yet.'}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  )
+}
+
 function App() {
   const path = window.location.pathname
 
@@ -1472,6 +1533,10 @@ function App() {
 
   if (path === '/week') {
     return <JournalOverviewPage />
+  }
+
+  if (path === '/recap') {
+    return <RecapPage />
   }
 
   if (path === '/about') {

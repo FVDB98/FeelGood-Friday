@@ -1111,6 +1111,8 @@
 
 .journal-save-button {
   width: auto;
+  font: inherit;
+  font-weight: 700;
 }
 
 .info-page-shell {
