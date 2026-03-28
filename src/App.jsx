@@ -1775,34 +1775,95 @@ function FAQPage() {
   )
 }
 
+function AuthStatusToast() {
+  const { isLoaded, isSignedIn } = useAuth()
+  const [toastMessage, setToastMessage] = useState('')
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return
+    }
+
+    const storageKey = 'feel-auth-state'
+    const previousState = window.sessionStorage.getItem(storageKey)
+    const nextState = isSignedIn ? 'signed-in' : 'signed-out'
+
+    if (previousState === null) {
+      window.sessionStorage.setItem(storageKey, nextState)
+      return
+    }
+
+    if (previousState !== nextState) {
+      setToastMessage(isSignedIn ? 'Signed in successfully.' : 'Signed out successfully.')
+      window.sessionStorage.setItem(storageKey, nextState)
+      return
+    }
+
+    window.sessionStorage.setItem(storageKey, nextState)
+  }, [isLoaded, isSignedIn])
+
+  useEffect(() => {
+    if (!toastMessage) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setToastMessage('')
+    }, 2800)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [toastMessage])
+
+  if (!toastMessage) {
+    return null
+  }
+
+  return (
+    <div className="auth-toast-shell" role="status" aria-live="polite">
+      <div className="auth-toast">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+        >
+          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M6.97 11.03l4.992-6.24a.75.75 0 1 0-1.172-.936L6.316 9.447 4.72 7.85a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.06-.03" />
+        </svg>
+        <p>{toastMessage}</p>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const path = window.location.pathname
 
+  let page = <LandingPage />
+
   if (path === '/signup') {
-    return <AuthPage mode="signup" />
+    page = <AuthPage mode="signup" />
+  } else if (path === '/signin') {
+    page = <AuthPage mode="signin" />
+  } else if (path === '/welcome') {
+    page = <WelcomePage />
+  } else if (path === '/week') {
+    page = <JournalOverviewPage />
+  } else if (path === '/about') {
+    page = <AboutPage />
+  } else if (path === '/faq') {
+    page = <FAQPage />
   }
 
-  if (path === '/signin') {
-    return <AuthPage mode="signin" />
-  }
-
-  if (path === '/welcome') {
-    return <WelcomePage />
-  }
-
-  if (path === '/week') {
-    return <JournalOverviewPage />
-  }
-
-  if (path === '/about') {
-    return <AboutPage />
-  }
-
-  if (path === '/faq') {
-    return <FAQPage />
-  }
-
-  return <LandingPage />
+  return (
+    <>
+      {hasClerkKey && <AuthStatusToast />}
+      {page}
+    </>
+  )
 }
 
 export default App

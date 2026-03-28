@@ -1304,6 +1304,38 @@
   font-size: 0.86rem;
 }
 
+.auth-toast-shell {
+  position: fixed;
+  top: 5.25rem;
+  right: 1rem;
+  z-index: 35;
+  pointer-events: none;
+}
+
+.auth-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3.1rem;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--green-100);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-soft);
+  color: var(--green-800);
+}
+
+.auth-toast svg {
+  flex: 0 0 auto;
+  color: var(--green-700);
+}
+
+.auth-toast p {
+  color: var(--text-strong);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .stats-section {
   margin-top: 2rem;
 }
@@ -1398,6 +1430,10 @@
 
   .auth-page-shell {
     padding: 6rem 1.5rem 3rem;
+  }
+
+  .auth-toast-shell {
+    right: max(1.5rem, calc((100vw - 70rem) / 2 + 1.5rem));
   }
 
   .hero-section {
