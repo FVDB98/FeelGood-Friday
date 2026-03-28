@@ -193,6 +193,68 @@ const clerkAppearance = {
   },
 }
 
+function isModifiedEvent(event) {
+  return event.metaKey || event.altKey || event.ctrlKey || event.shiftKey
+}
+
+function navigateTo(path) {
+  if (window.location.pathname === path) {
+    return
+  }
+
+  window.history.pushState({}, '', path)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+}
+
+function usePathname() {
+  const [pathname, setPathname] = useState(() => window.location.pathname)
+
+  useEffect(() => {
+    const handleNavigation = () => {
+      setPathname(window.location.pathname)
+    }
+
+    window.addEventListener('popstate', handleNavigation)
+
+    return () => {
+      window.removeEventListener('popstate', handleNavigation)
+    }
+  }, [])
+
+  return pathname
+}
+
+function LinkButton({ href, className, onClick, children, ...rest }) {
+  const handleClick = (event) => {
+    onClick?.(event)
+
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      rest.target === '_blank' ||
+      isModifiedEvent(event)
+    ) {
+      return
+    }
+
+    const url = new URL(href, window.location.origin)
+
+    if (url.origin !== window.location.origin) {
+      return
+    }
+
+    event.preventDefault()
+    navigateTo(url.pathname)
+  }
+
+  return (
+    <a href={href} className={className} onClick={handleClick} {...rest}>
+      {children}
+    </a>
+  )
+}
+
 function formatDate(date) {
   return new Intl.DateTimeFormat('en-GB').format(date)
 }
@@ -678,12 +740,12 @@ function DeleteEntryModal({
 }
 
 function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
-  const currentPath = window.location.pathname
+  const currentPath = usePathname()
 
   return (
     <>
       {isSignedIn && (
-        <a
+        <LinkButton
           className={`${
             isMobile ? 'nav-drawer-link' : 'nav-link'
           }${currentPath === '/week' ? ` ${isMobile ? 'nav-drawer-link-active' : 'nav-link-active'}` : ''}`}
@@ -691,10 +753,10 @@ function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
           onClick={onNavigate}
         >
           My week
-        </a>
+        </LinkButton>
       )}
       {navItems.map((item) => (
-        <a
+        <LinkButton
           key={item.href}
           className={`${isMobile ? 'nav-drawer-link' : 'nav-link'}${
             currentPath === item.href
@@ -705,7 +767,7 @@ function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
           onClick={onNavigate}
         >
           {item.label}
-        </a>
+        </LinkButton>
       ))}
     </>
   )
@@ -782,7 +844,7 @@ function SiteNav() {
           hasScrolled ? 'topbar-scrolled' : ''
         }`}
       >
-        <a className="brand" href="/" aria-label="FeelGood Friday home">
+        <LinkButton className="brand" href="/" aria-label="FeelGood Friday home">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -797,7 +859,7 @@ function SiteNav() {
             />
           </svg>
           FeelGood Friday
-        </a>
+        </LinkButton>
 
         <nav className="nav-primary" aria-label="Primary navigation">
           <NavMenuContent isSignedIn={isSignedIn} />
@@ -809,9 +871,9 @@ function SiteNav() {
               <UserButton afterSignOutUrl="/" />
             </div>
           ) : (
-            <a className="sign-in-link" href="/signin">
+            <LinkButton className="sign-in-link" href="/signin">
               Login
-            </a>
+            </LinkButton>
           )}
 
           <button
@@ -875,9 +937,9 @@ function SiteNav() {
               <UserButton afterSignOutUrl="/" />
             </div>
           ) : (
-            <a className="nav-drawer-signin" href="/signin" onClick={closeMenu}>
+            <LinkButton className="nav-drawer-signin" href="/signin" onClick={closeMenu}>
               Login
-            </a>
+            </LinkButton>
           )}
         </div>
       </aside>
@@ -930,7 +992,7 @@ function AuthPage({ mode }) {
       <section className="auth-layout auth-layout-minimal">
         <article className="auth-card auth-card-minimal">
           <div className="auth-page-title-banner">
-            <a className="auth-back-link" href="/">
+            <LinkButton className="auth-back-link" href="/">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
@@ -945,7 +1007,7 @@ function AuthPage({ mode }) {
                 />
               </svg>
               Back
-            </a>
+            </LinkButton>
             <h1 className="auth-page-title">{authTitle}</h1>
           </div>
           <div className="auth-clerk-shell">
@@ -990,9 +1052,9 @@ function LandingPage() {
             on time for the weekend.
           </p>
           <div className="hero-actions">
-            <a className="primary-button" href="/signup">
+            <LinkButton className="primary-button" href="/signup">
               Create an account
-            </a>
+            </LinkButton>
           </div>
         </div>
 
@@ -1133,12 +1195,12 @@ function WelcomePage() {
           </div>
 
           <div className="welcome-actions">
-            <a
+            <LinkButton
               className="primary-button welcome-button"
               href={isSignedIn ? '/week' : '/signin'}
             >
               Get started
-            </a>
+            </LinkButton>
           </div>
         </article>
       </section>
@@ -1839,7 +1901,7 @@ function AuthStatusToast() {
 }
 
 function App() {
-  const path = window.location.pathname
+  const path = usePathname()
 
   let page = <LandingPage />
 
