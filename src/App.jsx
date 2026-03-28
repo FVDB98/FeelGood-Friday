@@ -136,6 +136,26 @@ const faqItems = [
 ]
 
 const hasClerkKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
+const ukTimeZone = 'Europe/London'
+const ukDatePartFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: ukTimeZone,
+  weekday: 'short',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+const ukWeekdayNumberByShortLabel = {
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+  Sun: 0,
+}
 
 const clerkAppearance = {
   variables: {
@@ -177,20 +197,50 @@ function formatDate(date) {
   return new Intl.DateTimeFormat('en-GB').format(date)
 }
 
+function getUkDateParts(referenceDate) {
+  const parts = ukDatePartFormatter.formatToParts(referenceDate)
+  const partMap = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+
+  return {
+    weekday: ukWeekdayNumberByShortLabel[partMap.weekday],
+    year: Number(partMap.year),
+    month: Number(partMap.month),
+    day: Number(partMap.day),
+    hour: Number(partMap.hour),
+    minute: Number(partMap.minute),
+  }
+}
+
+function getUkCalendarDate(referenceDate) {
+  const { year, month, day } = getUkDateParts(referenceDate)
+  return new Date(Date.UTC(year, month - 1, day))
+}
+
+function getIsUkRecapMode(referenceDate) {
+  const { weekday, hour } = getUkDateParts(referenceDate)
+
+  if (weekday === 5) {
+    return hour >= 16
+  }
+
+  return weekday === 6 || weekday === 0
+}
+
 function getWorkweek(referenceDate) {
-  const currentDay = referenceDate.getDay()
+  const calendarDate = getUkCalendarDate(referenceDate)
+  const currentDay = calendarDate.getUTCDay()
   const distanceToMonday = currentDay === 0 ? -6 : 1 - currentDay
-  const monday = new Date(referenceDate)
-  monday.setDate(referenceDate.getDate() + distanceToMonday)
+  const monday = new Date(calendarDate)
+  monday.setUTCDate(calendarDate.getUTCDate() + distanceToMonday)
 
   return weekdayDefinitions.map((day, index) => {
     const date = new Date(monday)
-    date.setDate(monday.getDate() + index)
+    date.setUTCDate(monday.getUTCDate() + index)
 
     return {
       ...day,
       date,
-      dateLabel: formatDate(date),
+      dateLabel: new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC' }).format(date),
     }
   })
 }
@@ -232,6 +282,10 @@ function getFirstEntryContent(entries) {
   return entries[0]?.content ?? 'Nothing added yet.'
 }
 
+function getWeekEntries(entriesByDay, section) {
+  return weekdayDefinitions.flatMap((day) => entriesByDay[day.key]?.[section] ?? [])
+}
+
 function JournalNotes({ items }) {
   return (
     <ul className="journal-list">
@@ -239,6 +293,74 @@ function JournalNotes({ items }) {
         <li key={item}>{item}</li>
       ))}
     </ul>
+  )
+}
+
+function WeekendRecapPlaceholder({ journalEntries }) {
+  const gratitudeEntries = getWeekEntries(journalEntries, 'gratitude')
+  const winEntries = getWeekEntries(journalEntries, 'wins')
+  const totalEntries = gratitudeEntries.length + winEntries.length
+  const previewLimit = 3
+
+  return (
+    <section className="weekend-recap-card" aria-label="Weekly recap placeholder">
+      <div className="weekend-recap-header">
+        <h2>Your week at a glance</h2>
+        <p>
+          This weekend placeholder will become your full recap. For now, it shows the notes
+          you captured during the week.
+        </p>
+      </div>
+
+      <div className="weekend-recap-stats">
+        <article className="weekend-recap-stat">
+          <span>{totalEntries}</span>
+          <p>Total notes this week</p>
+        </article>
+        <article className="weekend-recap-stat">
+          <span>{gratitudeEntries.length}</span>
+          <p>Gratitude entries</p>
+        </article>
+        <article className="weekend-recap-stat">
+          <span>{winEntries.length}</span>
+          <p>Wins captured</p>
+        </article>
+      </div>
+
+      <div className="weekend-recap-grid">
+        <article className="weekend-recap-panel">
+          <p className="journal-section-kicker">Gratitude</p>
+          <h3>Moments worth keeping</h3>
+          {gratitudeEntries.length > 0 ? (
+            <ul className="journal-list">
+              {gratitudeEntries.slice(0, previewLimit).map((entry) => (
+                <li key={entry.id ?? entry.content} className="journal-entry-item">
+                  <span className="journal-entry-text">{entry.content}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="journal-empty-copy">No gratitude notes yet for this week.</p>
+          )}
+        </article>
+
+        <article className="weekend-recap-panel">
+          <p className="journal-section-kicker">Wins</p>
+          <h3>Progress you made</h3>
+          {winEntries.length > 0 ? (
+            <ul className="journal-list">
+              {winEntries.slice(0, previewLimit).map((entry) => (
+                <li key={entry.id ?? entry.content} className="journal-entry-item">
+                  <span className="journal-entry-text">{entry.content}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="journal-empty-copy">No wins logged yet for this week.</p>
+          )}
+        </article>
+      </div>
+    </section>
   )
 }
 
@@ -573,17 +695,6 @@ function NavMenuContent({ isSignedIn, onNavigate, isMobile = false }) {
           onClick={onNavigate}
         >
           My week
-        </a>
-      )}
-      {isSignedIn && (
-        <a
-          className={`${
-            isMobile ? 'nav-drawer-link' : 'nav-link'
-          }${currentPath === '/recap' ? ` ${isMobile ? 'nav-drawer-link-active' : 'nav-link-active'}` : ''}`}
-          href="/recap"
-          onClick={onNavigate}
-        >
-          My recap
         </a>
       )}
       {navItems.map((item) => (
@@ -1042,12 +1153,13 @@ function WelcomePage() {
 function JournalOverviewPage() {
   const { getToken, isSignedIn } = useAuth()
   const { user } = useUser()
-  const today = new Date()
-  const currentDay = today.getDay()
-  const isWeekend = currentDay === 0 || currentDay === 6
-  const workweek = getWorkweek(today)
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const todayEntryKey = isWeekend ? 'weekend' : weekdayDefinitions[currentDay - 1].key
+  const [currentTime, setCurrentTime] = useState(() => new Date())
+  const ukToday = getUkCalendarDate(currentTime)
+  const ukCurrentDay = ukToday.getUTCDay()
+  const isRecapMode = getIsUkRecapMode(currentTime)
+  const workweek = getWorkweek(currentTime)
+  const startOfToday = ukToday
+  const todayEntryKey = isRecapMode ? 'weekend' : weekdayDefinitions[ukCurrentDay - 1].key
   const [selectedDayKey, setSelectedDayKey] = useState(todayEntryKey)
   const [journalEntries, setJournalEntries] = useState(() => createEmptyJournalEntries())
   const [isLoadingWeek, setIsLoadingWeek] = useState(true)
@@ -1070,20 +1182,20 @@ function JournalOverviewPage() {
   const activeDayKey = selectedDayKey === 'weekend' ? 'fri' : selectedDayKey
 
   const activeDay = workweek.find((day) => day.key === selectedDayKey)
-  const isActiveDayToday = !isWeekend && selectedDayKey === todayEntryKey
-  const activeDateLabel = isWeekend
-    ? formatDate(today)
-    : activeDay?.dateLabel ?? formatDate(today)
-  const activeHeading = isWeekend
-    ? 'Today'
+  const isActiveDayToday = !isRecapMode && selectedDayKey === todayEntryKey
+  const activeDateLabel = isRecapMode
+    ? `${workweek[0]?.dateLabel ?? formatDate(ukToday)} - ${workweek[workweek.length - 1]?.dateLabel ?? formatDate(ukToday)}`
+    : activeDay?.dateLabel ?? new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC' }).format(ukToday)
+  const activeHeading = isRecapMode
+    ? 'This week'
     : isActiveDayToday
       ? 'Today'
       : activeDay?.long
   const activeEntries = journalEntries[activeDayKey] ?? { gratitude: [], wins: [] }
   const activeDayStart = activeDay
-    ? new Date(activeDay.date.getFullYear(), activeDay.date.getMonth(), activeDay.date.getDate())
+    ? new Date(activeDay.date)
     : startOfToday
-  const isFutureDay = !isWeekend && activeDayStart.getTime() > startOfToday.getTime()
+  const isFutureDay = !isRecapMode && activeDayStart.getTime() > startOfToday.getTime()
   const isLocked = isFutureDay || selectedDayKey === 'weekend'
   const daysUntilActive = isFutureDay
     ? Math.round((activeDayStart.getTime() - startOfToday.getTime()) / 86400000)
@@ -1099,6 +1211,21 @@ function JournalOverviewPage() {
   const pendingDeleteEntry = pendingDeleteState
     ? activeEntries[pendingDeleteState.section][pendingDeleteState.index]
     : null
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [])
+
+  useEffect(() => {
+    setSelectedDayKey(todayEntryKey)
+    resetJournalUiState()
+  }, [todayEntryKey])
 
   useEffect(() => {
     if (!isSignedIn || !user?.id) {
@@ -1371,13 +1498,27 @@ function JournalOverviewPage() {
 
       <div className="journal-overview-shell">
         <section className="journal-day-selector" aria-label="Weekday journal selector">
-          {isWeekend ? (
+          {isRecapMode ? (
             <div className="weekend-banner">
               <p className="weekend-banner-kicker">Weekend mode</p>
-              <h2>Enjoy your weekend!</h2>
+              <h2>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                  aria-hidden="true"
+                >
+                  <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
+                  <path d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
+                </svg>
+                Enjoy your weekend!
+              </h2>
               <p>
-                You made it through the week. Take the softer pace where you can.
-              </p>
+                You made it through the week! Whatever you have planned for the weekend, we hope it’s restful, fun, and exactly what you need.
+                Come back on Monday to start your next week of gratitude and wins!
+                </p>
             </div>
           ) : (
             <div className="day-pill-row">
@@ -1400,25 +1541,42 @@ function JournalOverviewPage() {
           <div className="journal-overview-header">
             <div className="journal-overview-header-copy">
               <p className="section-kicker">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  fill="currentColor"
-                  viewBox="0 0 16 16"
-                  aria-hidden="true"
-                >
-                  <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811z" />
-                  <path d="M8.5 2.687c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
-                  <path d="M8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783" />
-                </svg>
-                Journal
+                {isRecapMode ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                    aria-hidden="true"
+                  >
+                    <path d="M9.5 0a.5.5 0 0 1 .5.5.5.5 0 0 0 .5.5.5.5 0 0 1 .5.5V2a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 5 2v-.5a.5.5 0 0 1 .5-.5.5.5 0 0 0 .5-.5.5.5 0 0 1 .5-.5z" />
+                    <path d="M3 2.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 0 0-1h-.5A1.5 1.5 0 0 0 2 2.5v12A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 12.5 1H12a.5.5 0 0 0 0 1h.5a.5.5 0 0 1 .5.5v12a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5z" />
+                    <path d="M10 7a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zm-6 4a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm4-3a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0V9a1 1 0 0 0-1-1" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                    aria-hidden="true"
+                  >
+                    <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811z" />
+                    <path d="M8.5 2.687c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
+                    <path d="M8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783" />
+                  </svg>
+                )}
+                {isRecapMode ? 'Weekly recap' : 'Journal'}
               </p>
               <h1 className="journal-overview-title">{activeHeading}</h1>
               <p className="journal-overview-date">{activeDateLabel}</p>
-              <p className="journal-overview-copy">
-                Keep it short. One line is enough to make the day easier to remember.
-              </p>
+              {!isRecapMode && (
+                <p className="journal-overview-copy">
+                  Keep it short. One line is enough to make the day easier to remember.
+                </p>
+              )}
             </div>
           </div>
 
@@ -1434,40 +1592,44 @@ function JournalOverviewPage() {
             </div>
           )}
 
-          <div className="journal-sections-grid">
-            <JournalSection
-              title="Gratitude"
-              entries={gratitudeContent}
-              placeholderEntries={
-                isFutureDay && gratitudeContent.length === 0
-                  ? futurePlaceholders.gratitude
-                  : null
-              }
-              draftValue={draftState.gratitude}
-              isComposerOpen={composerState.gratitude}
-              isLocked={isLocked}
-              onDraftChange={(value) => handleDraftChange('gratitude', value)}
-              onToggleComposer={() => handleOpenComposer('gratitude')}
-              onAddEntry={() => handleAddEntry('gratitude')}
-              onOpenManager={() => handleOpenManager('gratitude')}
-            />
-            <JournalSection
-              title="Win"
-              entries={winsContent}
-              placeholderEntries={
-                isFutureDay && winsContent.length === 0
-                  ? futurePlaceholders.wins
-                  : null
-              }
-              draftValue={draftState.wins}
-              isComposerOpen={composerState.wins}
-              isLocked={isLocked}
-              onDraftChange={(value) => handleDraftChange('wins', value)}
-              onToggleComposer={() => handleOpenComposer('wins')}
-              onAddEntry={() => handleAddEntry('wins')}
-              onOpenManager={() => handleOpenManager('wins')}
-            />
-          </div>
+          {isRecapMode ? (
+            <WeekendRecapPlaceholder journalEntries={journalEntries} />
+          ) : (
+            <div className="journal-sections-grid">
+              <JournalSection
+                title="Gratitude"
+                entries={gratitudeContent}
+                placeholderEntries={
+                  isFutureDay && gratitudeContent.length === 0
+                    ? futurePlaceholders.gratitude
+                    : null
+                }
+                draftValue={draftState.gratitude}
+                isComposerOpen={composerState.gratitude}
+                isLocked={isLocked}
+                onDraftChange={(value) => handleDraftChange('gratitude', value)}
+                onToggleComposer={() => handleOpenComposer('gratitude')}
+                onAddEntry={() => handleAddEntry('gratitude')}
+                onOpenManager={() => handleOpenManager('gratitude')}
+              />
+              <JournalSection
+                title="Win"
+                entries={winsContent}
+                placeholderEntries={
+                  isFutureDay && winsContent.length === 0
+                    ? futurePlaceholders.wins
+                    : null
+                }
+                draftValue={draftState.wins}
+                isComposerOpen={composerState.wins}
+                isLocked={isLocked}
+                onDraftChange={(value) => handleDraftChange('wins', value)}
+                onToggleComposer={() => handleOpenComposer('wins')}
+                onAddEntry={() => handleAddEntry('wins')}
+                onOpenManager={() => handleOpenManager('wins')}
+              />
+            </div>
+          )}
 
           {isFutureDay && (
             <div className="journal-future-note">
@@ -1478,11 +1640,6 @@ function JournalOverviewPage() {
             </div>
           )}
 
-          {selectedDayKey === 'weekend' && (
-            <div className="journal-status-note">
-              <p>Weekend entries are read-only for now. New notes start again next week.</p>
-            </div>
-          )}
         </section>
       </div>
 
@@ -1618,122 +1775,6 @@ function FAQPage() {
   )
 }
 
-function RecapPage() {
-  const { getToken, isSignedIn } = useAuth()
-  const { user } = useUser()
-  const [entries, setEntries] = useState(() => createEmptyJournalEntries())
-  const [isLoadingWeek, setIsLoadingWeek] = useState(true)
-  const [apiError, setApiError] = useState('')
-  const recapDays = weekdayDefinitions.map((day) => ({
-    ...day,
-    entries: entries[day.key] ?? { gratitude: [], wins: [] },
-  }))
-
-  useEffect(() => {
-    if (!isSignedIn || !user?.id) {
-      setIsLoadingWeek(false)
-      return undefined
-    }
-
-    let isCancelled = false
-
-    const loadRecap = async () => {
-      try {
-        setIsLoadingWeek(true)
-        setApiError('')
-        await syncCurrentUser(getToken, user)
-        const response = await fetchCurrentWeek(getToken, user.id)
-
-        if (!isCancelled) {
-          setEntries(mapWeekToJournalEntries(response.week))
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          setApiError(error.message)
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoadingWeek(false)
-        }
-      }
-    }
-
-    void loadRecap()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [getToken, isSignedIn, user])
-
-  if (!isSignedIn || !user?.id) {
-    return (
-      <main className="page-shell">
-        <SiteNav />
-        <section className="info-page-shell">
-          <article className="info-page-card">
-            <p className="section-kicker">My recap</p>
-            <h1 className="info-page-title">Log in to view your recap</h1>
-            <p className="info-page-description">
-              Weekly recaps are tied to your account, so this page is only available when signed in.
-            </p>
-          </article>
-        </section>
-      </main>
-    )
-  }
-
-  return (
-    <main className="page-shell">
-      <SiteNav />
-
-      <section className="info-page-shell">
-        <article className="info-page-card">
-          <p className="section-kicker">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-              aria-hidden="true"
-            >
-              <path d="M8 0a.5.5 0 0 1 .5.5v1.793l.146-.147a.5.5 0 0 1 .708.708L8.207 4H10.5a.5.5 0 0 1 0 1H8a.5.5 0 0 1-.5-.5V.5A.5.5 0 0 1 8 0" />
-              <path d="M3.5 3A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5v-5a.5.5 0 0 1 1 0v5A2.5 2.5 0 0 1 12.5 15h-9A2.5 2.5 0 0 1 1 12.5v-8A2.5 2.5 0 0 1 3.5 2h5a.5.5 0 0 1 0 1z" />
-            </svg>
-            My recap
-          </p>
-          <h1 className="info-page-title">A simple look back at your week</h1>
-          <p className="info-page-description">
-            Your gratitude notes and wins come together here so you can see the
-            week as a whole.
-          </p>
-          <div className="info-page-content">
-            {isLoadingWeek && (
-              <div className="journal-status-note">
-                <p>Loading your weekly recap...</p>
-              </div>
-            )}
-            {apiError && (
-              <div className="journal-status-note journal-status-note-error">
-                <p>{apiError}</p>
-              </div>
-            )}
-            <div className="highlight-grid">
-              {recapDays.map((day) => (
-                <article className="highlight-card" key={day.key}>
-                  <h2>{day.long}</h2>
-                  <p><strong>Gratitude:</strong> {getFirstEntryContent(day.entries.gratitude)}</p>
-                  <p><strong>Win:</strong> {getFirstEntryContent(day.entries.wins)}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </article>
-      </section>
-    </main>
-  )
-}
-
 function App() {
   const path = window.location.pathname
 
@@ -1751,10 +1792,6 @@ function App() {
 
   if (path === '/week') {
     return <JournalOverviewPage />
-  }
-
-  if (path === '/recap') {
-    return <RecapPage />
   }
 
   if (path === '/about') {
