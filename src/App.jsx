@@ -1800,6 +1800,14 @@ function AboutPage() {
 }
 
 function FAQPage() {
+  const [openQuestion, setOpenQuestion] = useState(null)
+
+  const handleToggle = (question) => {
+    setOpenQuestion((currentQuestion) =>
+      currentQuestion === question ? null : question
+    )
+  }
+
   return (
     <InfoPage
       kicker={(
@@ -1822,12 +1830,53 @@ function FAQPage() {
       description="A few quick answers to explain how FeelGood Friday fits into your week."
     >
       <div className="faq-list">
-        {faqItems.map((item) => (
-          <article className="faq-item" key={item.question}>
-            <h2>{item.question}</h2>
-            <p>{item.answer}</p>
-          </article>
-        ))}
+        {faqItems.map((item, index) => {
+          const isOpen = openQuestion === item.question
+          const answerId = `faq-answer-${index}`
+
+          return (
+            <article className="faq-item" key={item.question}>
+              <button
+                type="button"
+                className="faq-trigger"
+                aria-expanded={isOpen}
+                aria-controls={answerId}
+                onClick={() => handleToggle(item.question)}
+              >
+                <span className="faq-question">{item.question}</span>
+                <span
+                  className={`faq-icon${isOpen ? ' faq-icon-open' : ''}`}
+                  aria-hidden="true"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                  >
+                    <path
+                      d="M5 8l5 5 5-5"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </button>
+              <div
+                className={`faq-answer-wrapper${isOpen ? ' faq-answer-wrapper-open' : ''}`}
+              >
+                <div className="faq-answer-inner">
+                  <p className="faq-answer" id={answerId}>
+                    {item.answer}
+                  </p>
+                </div>
+              </div>
+            </article>
+          )
+        })}
       </div>
     </InfoPage>
   )
