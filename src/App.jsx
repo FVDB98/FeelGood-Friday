@@ -278,10 +278,6 @@ function mapWeekToJournalEntries(week) {
   return nextEntries
 }
 
-function getFirstEntryContent(entries) {
-  return entries[0]?.content ?? 'Nothing added yet.'
-}
-
 function getWeekEntries(entriesByDay, section) {
   return weekdayDefinitions.flatMap((day) => entriesByDay[day.key]?.[section] ?? [])
 }
@@ -1794,7 +1790,10 @@ function AuthStatusToast() {
     }
 
     if (previousState !== nextState) {
-      setToastMessage(isSignedIn ? 'Signed in successfully.' : 'Signed out successfully.')
+      const nextMessage = isSignedIn ? 'Signed in successfully.' : 'Signed out successfully.'
+      window.setTimeout(() => {
+        setToastMessage(nextMessage)
+      }, 0)
       window.sessionStorage.setItem(storageKey, nextState)
       return
     }
