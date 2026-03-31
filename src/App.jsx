@@ -354,19 +354,213 @@ function JournalNotes({ items }) {
   )
 }
 
-function WeekendRecapPlaceholder({ journalEntries }) {
+const landingPreviewWeekendEntries = {
+  mon: {
+    gratitude: ['A calm start to the week and enough energy to ease in.'],
+    wins: ['Showed up even though motivation was low.'],
+  },
+  tue: {
+    gratitude: ['A homemade dinner that felt nourishing and grounding.'],
+    wins: ['Finished a workout and kept the routine going.'],
+  },
+  wed: {
+    gratitude: ['Sunshine, fresh air, and a walk that cleared my head.'],
+    wins: ['Made steady progress without spiralling into pressure.'],
+  },
+  thu: {
+    gratitude: ['A quiet evening and time to properly reset at home.'],
+    wins: ['Got life admin done and created a calmer space.'],
+  },
+  fri: {
+    gratitude: ['Relief that the weekend is here and something to look forward to.'],
+    wins: ['Wrapped up the week and gave myself credit for it.'],
+  },
+}
+
+function LandingJournalPreview() {
+  const previewDay = journalEntries[1]
+
+  return (
+    <div className="app-preview-frame" aria-label="Journaling app preview">
+      <div className="app-preview-screen">
+        <div className="app-preview-surface">
+          <div className="app-preview-static">
+            <div className="journal-day-selector">
+              <div className="day-pill-row">
+                {weekdayDefinitions.map((day, index) => {
+                  const isActive = day.long === previewDay.day
+
+                  return (
+                    <div
+                      key={day.key}
+                      className={`day-pill ${isActive ? 'day-pill-active' : ''}`}
+                    >
+                      <span>{day.short}</span>
+                      <small>{24 + index}</small>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <section className="journal-overview-card">
+              <div className="journal-overview-header">
+                <div className="journal-overview-header-copy">
+                  <p className="section-kicker">Journal</p>
+                  <h2 className="journal-overview-title">{previewDay.day}</h2>
+                  <p className="journal-overview-date">Tuesday, March 25</p>
+                  <p className="journal-overview-copy">
+                    Keep it short. One line is enough to make the day easier to remember.
+                  </p>
+                </div>
+              </div>
+
+              <div className="journal-sections-grid">
+                <section className="journal-section-card">
+                  <div className="journal-section-header">
+                    <div>
+                      <p className="journal-section-kicker">Gratitude</p>
+                      <h2>What felt good today?</h2>
+                    </div>
+                    <span className="journal-section-edit-button" aria-hidden="true">
+                      Edit
+                    </span>
+                  </div>
+
+                  <ul className="journal-list">
+                    {previewDay.gratitude.map((entry, index) => (
+                      <li key={`${entry}-${index}`} className="journal-entry-item">
+                        <div className="journal-entry-row">
+                          <span className="journal-entry-text">{entry}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="journal-card-actions">
+                    <span className="journal-add-inline" aria-hidden="true">
+                      +
+                    </span>
+                  </div>
+                </section>
+
+                <section className="journal-section-card">
+                  <div className="journal-section-header">
+                    <div>
+                      <p className="journal-section-kicker">Win</p>
+                      <h2>What went well?</h2>
+                    </div>
+                    <span className="journal-section-edit-button" aria-hidden="true">
+                      Edit
+                    </span>
+                  </div>
+
+                  <ul className="journal-list">
+                    {previewDay.wins.map((entry, index) => (
+                      <li key={`${entry}-${index}`} className="journal-entry-item">
+                        <div className="journal-entry-row">
+                          <span className="journal-entry-text">{entry}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="journal-card-actions">
+                    <span className="journal-add-inline" aria-hidden="true">
+                      +
+                    </span>
+                  </div>
+                </section>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LandingWeekendPreview() {
+  return (
+    <div className="app-preview-frame" aria-label="Weekend recap preview">
+      <div className="app-preview-screen">
+        <div className="app-preview-surface">
+          <div className="app-preview-static">
+            <div className="journal-overview-shell">
+              <section className="journal-day-selector" aria-label="Weekend preview selector">
+                <div className="weekend-banner">
+                  <p className="weekend-banner-kicker">Weekend mode</p>
+                  <h2>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      fill="currentColor"
+                      viewBox="0 0 16 16"
+                      aria-hidden="true"
+                    >
+                      <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
+                      <path d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
+                    </svg>
+                    Enjoy your weekend!
+                  </h2>
+                  <p>
+                    You made it through the week! Whatever you have planned for the weekend, we hope it’s restful, fun, and exactly what you need.
+                    Come back on Monday to start your next week of gratitude and wins!
+                  </p>
+                </div>
+              </section>
+
+              <section className="journal-overview-card">
+                <div className="journal-overview-header">
+                  <div className="journal-overview-header-copy">
+                    <p className="section-kicker">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path d="M9.5 0a.5.5 0 0 1 .5.5.5.5 0 0 0 .5.5.5.5 0 0 1 .5.5V2a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 5 2v-.5a.5.5 0 0 1 .5-.5.5.5 0 0 0 .5-.5.5.5 0 0 1 .5-.5z" />
+                        <path d="M3 2.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 0 0-1h-.5A1.5 1.5 0 0 0 2 2.5v12A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 12.5 1H12a.5.5 0 0 0 0 1h.5a.5.5 0 0 1 .5.5v12a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5z" />
+                        <path d="M10 7a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zm-6 4a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm4-3a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0V9a1 1 0 0 0-1-1" />
+                      </svg>
+                      Weekly recap
+                    </p>
+                    <h1 className="journal-overview-title">This week</h1>
+                    <p className="journal-overview-date">23/03/2026 - 27/03/2026</p>
+                  </div>
+                </div>
+
+                <WeekendRecapPlaceholder
+                  journalEntries={landingPreviewWeekendEntries}
+                  summaryText="You kept finding small bright spots through the week: calmer mornings, nourishing meals, fresh air, and a home that felt more settled. You also kept moving forward by showing up, finishing your workout, making steady progress, sorting life admin, and closing out the week with something to feel proud of."
+                />
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WeekendRecapPlaceholder({ journalEntries, summaryText }) {
   const gratitudeEntries = getWeekEntries(journalEntries, 'gratitude')
   const winEntries = getWeekEntries(journalEntries, 'wins')
   const totalEntries = gratitudeEntries.length + winEntries.length
   const previewLimit = 3
+  const getEntryContent = (entry) => (typeof entry === 'string' ? entry : entry?.content ?? '')
 
   return (
     <section className="weekend-recap-card" aria-label="Weekly recap placeholder">
       <div className="weekend-recap-header">
         <h2>Your week at a glance</h2>
         <p>
-          This weekend placeholder will become your full recap. For now, it shows the notes
-          you captured during the week.
+          {summaryText ??
+            'This weekend placeholder will become your full recap. For now, it shows the notes you captured during the week.'}
         </p>
       </div>
 
@@ -392,8 +586,8 @@ function WeekendRecapPlaceholder({ journalEntries }) {
           {gratitudeEntries.length > 0 ? (
             <ul className="journal-list">
               {gratitudeEntries.slice(0, previewLimit).map((entry) => (
-                <li key={entry.id ?? entry.content} className="journal-entry-item">
-                  <span className="journal-entry-text">{entry.content}</span>
+                <li key={entry.id ?? getEntryContent(entry)} className="journal-entry-item">
+                  <span className="journal-entry-text">{getEntryContent(entry)}</span>
                 </li>
               ))}
             </ul>
@@ -408,8 +602,8 @@ function WeekendRecapPlaceholder({ journalEntries }) {
           {winEntries.length > 0 ? (
             <ul className="journal-list">
               {winEntries.slice(0, previewLimit).map((entry) => (
-                <li key={entry.id ?? entry.content} className="journal-entry-item">
-                  <span className="journal-entry-text">{entry.content}</span>
+                <li key={entry.id ?? getEntryContent(entry)} className="journal-entry-item">
+                  <span className="journal-entry-text">{getEntryContent(entry)}</span>
                 </li>
               ))}
             </ul>
@@ -1058,8 +1252,8 @@ function LandingPage() {
           </div>
         </div>
 
-        <div className="hero-panel" aria-label="Weekly reflection preview">
-          <div className="panel-card panel-card-main">
+        <div className="hero-panel" aria-label="App preview">
+          <div className="hero-preview-copy panel-card panel-card-main">
             <span className="panel-label">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1069,34 +1263,47 @@ function LandingPage() {
                 viewBox="0 0 16 16"
                 aria-hidden="true"
               >
-                <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0" />
-                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+                <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811z" />
+                <path d="M8.5 2.687c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
+                <path d="M8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783" />
               </svg>
-              Friday recap
+              App preview
             </span>
-            <h2>You made it through the week!</h2>
+            <h2>A snapshot of the journaling flow</h2>
             <p className="panel-summary">
-              Sunshine, good food, thoughtful catch-ups, and a fun weekend
-              ahead. You moved your body, got outside, reset your space, and
-              made it through the week. Nice work - you deserve to feel good about that!
+              See the same weekday journal layout before you sign up: a quick day
+              selector, space for gratitude and wins, and a lightweight flow that
+              feels easy to return to.
             </p>
           </div>
-          <div className="panel-grid">
-            {journalEntries.map((entry) => (
-              <article className="panel-card" key={entry.day}>
-                <div className="journal-day-header">
-                  <h3 className="day-tag">{entry.day}</h3>
-                </div>
-                <div className="journal-entry">
-                  <span className="entry-label">Gratitude</span>
-                  <JournalNotes items={entry.gratitude} />
-                </div>
-                <div className="journal-entry">
-                  <span className="entry-label">Win</span>
-                  <JournalNotes items={entry.wins} />
-                </div>
-              </article>
-            ))}
+          <LandingJournalPreview />
+        </div>
+      </section>
+
+      <section className="hero-section hero-section-secondary">
+        <div className="hero-panel hero-panel-reverse" aria-label="Weekend recap preview">
+          <LandingWeekendPreview />
+          <div className="hero-preview-copy panel-card panel-card-main app-preview-copy-card">
+            <span className="panel-label">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+              >
+                <path d="M9.5 0a.5.5 0 0 1 .5.5.5.5 0 0 0 .5.5.5.5 0 0 1 .5.5V2a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 5 2v-.5a.5.5 0 0 1 .5-.5.5.5 0 0 0 .5-.5.5.5 0 0 1 .5-.5z" />
+                <path d="M3 2.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 0 0-1h-.5A1.5 1.5 0 0 0 2 2.5v12A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 12.5 1H12a.5.5 0 0 0 0 1h.5a.5.5 0 0 1 .5.5v12a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5z" />
+                <path d="M10 7a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0zm-6 4a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0zm4-3a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0V9a1 1 0 0 0-1-1" />
+              </svg>
+              Weekend recap
+            </span>
+            <h2>A snapshot of your weekly recap</h2>
+            <p className="panel-summary">
+              By the weekend, your entries turn into a simple recap with a summary,
+              totals, and the standout wins and gratitude moments from the week.
+            </p>
           </div>
         </div>
       </section>
@@ -1730,16 +1937,17 @@ function JournalOverviewPage() {
   )
 }
 
-function InfoPage({ kicker, title, description, children }) {
+function InfoPage({ kicker, title, description, afterTitle, children }) {
   return (
     <main className="page-shell">
       <SiteNav />
 
       <section className="info-page-shell">
         <article className="info-page-card">
-          <p className="section-kicker">{kicker}</p>
+          <div className="info-page-kicker">{kicker}</div>
           <h1 className="info-page-title">{title}</h1>
           <p className="info-page-description">{description}</p>
+          {afterTitle ? <div className="info-page-after-title">{afterTitle}</div> : null}
           <div className="info-page-content">
             {children}
           </div>
@@ -1750,10 +1958,24 @@ function InfoPage({ kicker, title, description, children }) {
 }
 
 function AboutPage() {
+  const aboutBoxHeartIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      fill="currentColor"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+    >
+      <path d="M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.982" />
+      <path d="M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" />
+    </svg>
+  )
+
   return (
     <InfoPage
       kicker={(
-        <>
+        <span className="section-kicker">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -1766,32 +1988,41 @@ function AboutPage() {
             <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
           </svg>
           About
+        </span>
+      )}
+      title={(
+        <>
+          <span>Celebrate the little things, every week</span>
+          <span className="info-page-title-icon" aria-hidden="true">{aboutBoxHeartIcon}</span>
         </>
       )}
-      title="A gentler way to notice what went well"
-      description="FeelGood Friday is built to help you catch the moments that are easy to forget by the end of a busy week."
+      afterTitle={(
+        <span className="info-page-mobile-divider-icon" aria-hidden="true">
+          {aboutBoxHeartIcon}
+        </span>
+      )}
+      description="FeelGood Friday is built to help you be your number one fan. No comparisons and no pressure, just an easy way to be mindful of the goodness in your week - with a summary delivered to you ready for the weekend!"
     >
       <div className="info-page-grid">
         <article className="info-page-panel">
           <h2>Why it exists</h2>
           <p>
-            Most weeks move fast. Small wins, calming routines, and good moments
-            can disappear under everything else. FeelGood Friday gives them a
-            place to land.
+            Weeks go by quickly. Small wins, and nice moments
+            can easily be overlooked. FeelGood Friday gives them a
+            place to be noticed and appreciated.
           </p>
         </article>
         <article className="info-page-panel">
           <h2>How it feels</h2>
-          <p>
-            The experience is intentionally light. A few short notes during the
-            week turn into something warm, clear, and useful by Friday.
+          <p> 
+            like your own personal highlight reel. A space to celebrate the good stuff, no matter how small.
           </p>
         </article>
         <article className="info-page-panel">
           <h2>What to expect</h2>
           <p>
-            No pressure to perform. No need to write essays. Just enough
-            structure to help you notice gratitude, momentum, and progress.
+            No pressure to perform. No comparisons to make. 
+            Just a relaxed space to be kind to yourself and notice the good in your week.
           </p>
         </article>
       </div>
@@ -1811,7 +2042,7 @@ function FAQPage() {
   return (
     <InfoPage
       kicker={(
-        <>
+        <span className="section-kicker">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -1824,7 +2055,7 @@ function FAQPage() {
             <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
           </svg>
           FAQ
-        </>
+        </span>
       )}
       title="Questions people usually ask first"
       description="A few quick answers to explain how FeelGood Friday fits into your week."

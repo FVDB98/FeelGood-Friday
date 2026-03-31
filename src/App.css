@@ -345,13 +345,13 @@
 .hero-panel {
   display: grid;
   gap: 1rem;
+  align-content: start;
   max-width: 30rem;
-  padding: 1rem;
-  border-radius: 1.75rem;
-  background: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(10px);
+}
+
+.hero-preview-copy {
+  position: relative;
+  z-index: 1;
 }
 
 .panel-grid {
@@ -383,6 +383,78 @@
 .panel-summary {
   color: var(--text-strong);
   line-height: 1.6;
+}
+
+.app-preview-frame {
+  position: relative;
+}
+
+.app-preview-screen {
+  overflow: hidden;
+  border-radius: 1.6rem;
+  background: linear-gradient(180deg, #f8fbf9 0%, #f2f7f3 100%);
+  border: 1px solid rgba(190, 228, 211, 0.9);
+  box-shadow: 0 16px 30px rgba(36, 49, 44, 0.12);
+}
+
+.app-preview-surface {
+  padding: 1rem;
+  background: transparent;
+}
+
+.app-preview-static {
+  display: grid;
+  gap: 1rem;
+}
+
+.app-preview-copy-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 251, 250, 0.98));
+}
+
+.hero-section-secondary {
+  position: relative;
+  margin-top: 2.25rem;
+  padding-top: 2rem;
+}
+
+.app-preview-static .journal-overview-shell {
+  max-width: none;
+  margin: 0;
+}
+
+.app-preview-static .journal-overview-card {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.app-preview-static .day-pill {
+  min-height: 3.25rem;
+  padding: 0.55rem 0.35rem;
+  gap: 0.12rem;
+  border-radius: 1rem;
+}
+
+.app-preview-static .day-pill small {
+  font-size: 0.72rem;
+}
+
+.app-preview-static .journal-section-edit-button,
+.app-preview-static .journal-add-inline {
+  cursor: default;
+}
+
+.app-preview-static .journal-add-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-panel-reverse .hero-preview-copy {
+  order: 1;
+}
+
+.hero-panel-reverse .app-preview-frame {
+  order: 2;
 }
 
 .journal-day-header {
@@ -999,8 +1071,12 @@
 }
 
 .journal-add-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
+  padding: 0;
   border: 0;
   border-radius: 999px;
   background: var(--green-700);
@@ -1205,9 +1281,52 @@
   box-shadow: var(--shadow-soft);
 }
 
+.info-page-kicker {
+  margin-bottom: 0.9rem;
+}
+
+.info-page-kicker .section-kicker {
+  margin-bottom: 0;
+}
+
 .info-page-title {
   max-width: 42rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   font-size: clamp(2.35rem, 6vw, 4rem);
+}
+
+.info-page-mobile-divider-icon,
+.info-page-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0.12em;
+  line-height: 1;
+}
+
+.info-page-mobile-divider-icon {
+  width: 100%;
+  margin-top: 0.65rem;
+  color: #000;
+  font-size: clamp(2.35rem, 6vw, 4rem);
+}
+
+.info-page-mobile-divider-icon svg,
+.info-page-title svg {
+  flex: 0 0 auto;
+  font-size: 1em;
+}
+
+.info-page-after-title {
+  display: flex;
+  justify-content: center;
+}
+
+.info-page-title-icon {
+  display: none;
 }
 
 .info-page-description {
@@ -1549,6 +1668,14 @@
     padding: 2rem;
   }
 
+  .info-page-after-title {
+    display: none;
+  }
+
+  .info-page-title-icon {
+    display: inline-flex;
+  }
+
   .welcome-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1564,6 +1691,10 @@
   .panel-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.9rem;
+  }
+
+  .app-preview-frame {
+    padding: 1rem;
   }
 
   .highlight-grid {
@@ -1602,11 +1733,29 @@
 
   .hero-panel {
     max-width: none;
+    grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+    align-items: start;
   }
 
-  .panel-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.85rem;
+  .hero-panel > .hero-preview-copy,
+  .hero-panel > .app-preview-frame {
+    align-self: start;
+  }
+
+  .hero-panel > .app-preview-frame {
+    margin-top: -0.35rem;
+  }
+
+  .hero-panel-reverse {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
+  }
+
+  .hero-panel-reverse .app-preview-frame {
+    order: 1;
+  }
+
+  .hero-panel-reverse .hero-preview-copy {
+    order: 2;
   }
 
   .panel-card-main {
