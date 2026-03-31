@@ -1241,8 +1241,8 @@ function LandingPage() {
             matter how big or small
           </p>
           <p className="hero-description">
-            Every weekday, make a note of what you’re grateful for and the wins you
-            made. On Friday, get a feel-good recap of your week. Delivered right
+            Every weekday, make a note of what you’re grateful for and your wins.
+            On Friday, get a feel-good recap of your week. Delivered right
             on time for the weekend.
           </p>
           <div className="hero-actions">
@@ -1251,7 +1251,26 @@ function LandingPage() {
             </LinkButton>
           </div>
         </div>
+      </section>
 
+      <section className="landing-flow-marker" aria-label="Log your week section marker">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708z"
+          />
+        </svg>
+        <h2>Log your week</h2>
+      </section>
+
+      <section className="hero-section hero-section-preview">
         <div className="hero-panel" aria-label="App preview">
           <div className="hero-preview-copy panel-card panel-card-main">
             <span className="panel-label">
@@ -1267,17 +1286,33 @@ function LandingPage() {
                 <path d="M8.5 2.687c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
                 <path d="M8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783" />
               </svg>
-              App preview
+              How it looks
             </span>
-            <h2>A snapshot of the journaling flow</h2>
+            <h2>Preview of journaling</h2>
             <p className="panel-summary">
-              See the same weekday journal layout before you sign up: a quick day
-              selector, space for gratitude and wins, and a lightweight flow that
-              feels easy to return to.
+              A quick day selector, space for gratitude and wins, 
+              and a lightweight flow that's easy to use.
             </p>
           </div>
           <LandingJournalPreview />
         </div>
+      </section>
+
+      <section className="landing-flow-marker landing-flow-marker-flipped" aria-label="See your recap section marker">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M4.854 14.854a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V3.5A2.5 2.5 0 0 1 6.5 1h8a.5.5 0 0 1 0 1h-8A1.5 1.5 0 0 0 5 3.5v9.793l3.146-3.147a.5.5 0 0 1 .708.708z"
+          />
+        </svg>
+        <h2>See your recap</h2>
       </section>
 
       <section className="hero-section hero-section-secondary">
