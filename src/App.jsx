@@ -1171,7 +1171,7 @@ function AuthWidget({ mode }) {
     <SignIn
       appearance={clerkAppearance}
       signUpUrl="/signup"
-      forceRedirectUrl="/welcome"
+      forceRedirectUrl="/week"
     />
   )
 }
